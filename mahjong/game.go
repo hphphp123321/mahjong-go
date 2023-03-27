@@ -453,8 +453,8 @@ func (game *Game) judgeChi(pMain *Player, tileID int) Calls {
 		}
 		posClass = append(posClass, tileClass)
 		flag := true
-		for _, handTIlesID := range pMain.HandTiles {
-			if !common.Contain(handTIlesID/4, posClass) {
+		for _, handTilesID := range pMain.HandTiles {
+			if !common.Contain(handTilesID/4, posClass) {
 				flag = false
 			}
 		}
