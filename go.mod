@@ -1,10 +1,9 @@
-module mahjong-go
+module github.com/hphphp123321/mahjong-go
 
 go 1.20
 
 require (
 	github.com/dnovikoff/tempai-core v0.0.0-20201102152242-80e66cf333ab
-	github.com/hphphp123321/mahjong-goserver v0.0.0-20230228151620-34dc54eb4f0d
 )
 
 require (

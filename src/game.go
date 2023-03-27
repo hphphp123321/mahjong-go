@@ -4,7 +4,7 @@ import (
 	"github.com/dnovikoff/tempai-core/base"
 	"github.com/dnovikoff/tempai-core/score"
 	"github.com/dnovikoff/tempai-core/yaku"
-	"github.com/hphphp123321/mahjong-goserver/common"
+	"github.com/hphphp123321/mahjong-go/common"
 	"sort"
 )
 
