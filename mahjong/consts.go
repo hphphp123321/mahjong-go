@@ -19,6 +19,36 @@ var MapStringToWind = func() map[string]Wind {
 	return m
 }()
 
+type WindRound int
+
+//go:generate stringer -type=WindRound
+const (
+	WindRoundEast1 WindRound = iota
+	WindRoundEast2
+	WindRoundEast3
+	WindRoundEast4
+	WindRoundSouth1
+	WindRoundSouth2
+	WindRoundSouth3
+	WindRoundSouth4
+	WindRoundWest1
+	WindRoundWest2
+	WindRoundWest3
+	WindRoundWest4
+	WindRoundNorth1
+	WindRoundNorth2
+	WindRoundNorth3
+	WindRoundNorth4
+)
+
+var MapStringToWindRound = func() map[string]WindRound {
+	m := make(map[string]WindRound)
+	for i := WindRoundEast1; i <= WindRoundNorth4; i++ {
+		m[i.String()] = i
+	}
+	return m
+}()
+
 type CallType int
 
 //go:generate stringer -type=CallType
@@ -64,6 +94,8 @@ const (
 	EventTypeNewIndicator
 	EventTypeChanKan
 	EventTypeRyuuKyoku
+	EventTypeStart
+	EventTypeEnd
 )
 
 var MapStringToEventType = func() map[string]EventType {

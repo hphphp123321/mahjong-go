@@ -5,11 +5,13 @@ import (
 	"github.com/dnovikoff/tempai-core/score"
 	"github.com/dnovikoff/tempai-core/yaku"
 	"github.com/hphphp123321/mahjong-go/common"
+	"math/rand"
 	"sort"
 )
 
 type Game struct {
 	rule *Rule
+	seed int64
 
 	P0        *Player
 	P1        *Player
@@ -22,7 +24,7 @@ type Game struct {
 
 	Tiles *MahjongTiles
 
-	WindRound int // {0:东一, 1:东二, 2:东三, 3:东四, 4:南一, 5:南二, 6:南三, 7:南四(all last), 8:西一(西入条件)...}
+	WindRound WindRound // {0:东一, 1:东二, 2:东三, 3:东四, 4:南一, 5:南二, 6:南三, 7:南四(all last), 8:西一(西入条件)...}
 	NumGame   int
 	NumRiichi int
 	NumHonba  int
@@ -32,8 +34,12 @@ type Game struct {
 	State gameState
 }
 
-func NewMahjongGame(playerSlice []*Player, rule *Rule) *Game {
-	game := Game{Tiles: NewMahjongTiles()}
+func NewMahjongGame(playerSlice []*Player, seed int64, rule *Rule) *Game {
+	randP := rand.New(rand.NewSource(seed))
+	game := Game{
+		Tiles: NewMahjongTiles(randP),
+		seed:  seed,
+	}
 	game.Reset(playerSlice)
 	if rule == nil {
 		game.rule = GetDefaultRule()
@@ -43,7 +49,7 @@ func NewMahjongGame(playerSlice []*Player, rule *Rule) *Game {
 	return &game
 }
 
-func (game *Game) NewGameRound(windRound int) {
+func (game *Game) NewGameRound(windRound WindRound) {
 	game.WindRound = windRound
 	game.NumGame += 1
 	game.Tiles.Reset()

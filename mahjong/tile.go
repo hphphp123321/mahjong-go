@@ -36,6 +36,8 @@ func newTile(tileId int) *Tile {
 }
 
 type MahjongTiles struct {
+	randP *rand.Rand
+
 	allTiles       map[int]*Tile
 	tiles          [NumTiles]int
 	kanNum         int
@@ -45,9 +47,13 @@ type MahjongTiles struct {
 	rinshanPointer int
 }
 
-func NewMahjongTiles() *MahjongTiles {
+func NewMahjongTiles(randP *rand.Rand) *MahjongTiles {
+	if randP == nil {
+		randP = rand.New(rand.NewSource(1))
+	}
 	mahjongTiles := MahjongTiles{
 		allTiles: make(map[int]*Tile, NumTiles),
+		randP:    randP,
 	}
 	mahjongTiles.Reset()
 	return &mahjongTiles
@@ -59,7 +65,7 @@ func (tiles *MahjongTiles) Reset() {
 		tiles.tiles[i] = i
 	}
 
-	rand.Shuffle(NumTiles, func(i, j int) {
+	tiles.randP.Shuffle(NumTiles, func(i, j int) {
 		tiles.tiles[i], tiles.tiles[j] = tiles.tiles[j], tiles.tiles[i]
 	})
 
