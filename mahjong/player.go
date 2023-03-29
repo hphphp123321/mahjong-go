@@ -34,8 +34,6 @@ type Player struct {
 	IsDaburuRiichi  bool
 	IsTenhou        bool
 	IsChiihou       bool
-	Reward          int
-	FinalReward     int
 	RiichiStep      int
 }
 
@@ -116,7 +114,7 @@ func (player *Player) ResetForRound() {
 	player.Melds = make(Calls, 0, 4)
 	player.TenhaiTiles = make(Tiles, 0, 13)
 	player.ShantenNum = 7
-	player.TenhaiSlice = []int{}
+	player.TenhaiSlice = Tiles{}
 	player.JunFuriten = false
 	player.DiscardFuriten = false
 	player.RiichiFuriten = false
@@ -133,12 +131,10 @@ func (player *Player) ResetForRound() {
 	player.IsDaburuRiichi = false
 	player.IsTenhou = false
 	player.IsChiihou = false
-	player.Reward = 0
 	player.RiichiStep = 0
 }
 
 func (player *Player) ResetForGame() {
 	player.Points = 25000
-	player.FinalReward = -1
 	player.ResetForRound()
 }

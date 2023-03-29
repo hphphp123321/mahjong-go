@@ -19,8 +19,9 @@ type Game struct {
 	P3        *Player
 	posPlayer map[Wind]*Player
 
-	posEvents map[Wind]Events
-	posCall   map[Wind]*Call
+	posEvents  map[Wind]Events
+	ValidCalls map[Wind]Calls
+	//posCall   map[Wind]*Call
 
 	Tiles *MahjongTiles
 
@@ -49,16 +50,21 @@ func NewMahjongGame(playerSlice []*Player, seed int64, rule *Rule) *Game {
 	return &game
 }
 
-func (game *Game) NewGameRound(windRound WindRound) {
-	game.WindRound = windRound
+func (game *Game) addPosEvent(posEvent map[Wind]Event) {
+	for pos, event := range posEvent {
+		game.posEvents[pos] = append(game.posEvents[pos], event)
+	}
+}
+
+func (game *Game) NewGameRound() {
 	game.NumGame += 1
 	game.Tiles.Reset()
 	game.Position = 0
 	game.posEvents = map[Wind]Events{}
-	game.posPlayer[Wind((16-windRound)%4)] = game.P0
-	game.posPlayer[Wind((17-windRound)%4)] = game.P1
-	game.posPlayer[Wind((18-windRound)%4)] = game.P2
-	game.posPlayer[Wind((19-windRound)%4)] = game.P3
+	game.posPlayer[Wind((16-game.WindRound)%4)] = game.P0
+	game.posPlayer[Wind((17-game.WindRound)%4)] = game.P1
+	game.posPlayer[Wind((18-game.WindRound)%4)] = game.P2
+	game.posPlayer[Wind((19-game.WindRound)%4)] = game.P3
 	game.P0.ResetForRound()
 	game.P1.ResetForRound()
 	game.P2.ResetForRound()
@@ -67,11 +73,11 @@ func (game *Game) NewGameRound(windRound WindRound) {
 
 func (game *Game) Reset(playerSlice []*Player) {
 	game.Tiles.Reset()
-	game.NumGame = 0
-	game.WindRound = 0
+	game.NumGame = -1
+	game.WindRound = WindRoundDummy
 	game.NumRiichi = 0
 	game.NumHonba = 0
-	game.Position = 0
+	game.Position = South
 	game.posEvents = map[Wind]Events{}
 
 	game.P0 = playerSlice[0]
@@ -146,8 +152,8 @@ func (game *Game) GetTileProcess(pMain *Player, tileID int) {
 }
 
 // DealTile TODO deal tile
-func (game *Game) DealTile() {
-	game.Tiles.DealTile(false)
+func (game *Game) DealTile(dealRinshan bool) int {
+	return game.Tiles.DealTile(dealRinshan)
 }
 
 func (game *Game) DiscardTileProcess(pMain *Player, tileID int) {

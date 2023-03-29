@@ -23,7 +23,8 @@ type WindRound int
 
 //go:generate stringer -type=WindRound
 const (
-	WindRoundEast1 WindRound = iota
+	WindRoundDummy WindRound = -1 + iota
+	WindRoundEast1
 	WindRoundEast2
 	WindRoundEast3
 	WindRoundEast4
@@ -66,6 +67,7 @@ const (
 	Tsumo
 	KyuShuKyuHai
 	ChanKan
+	Next
 )
 
 var MapStringToCallType = func() map[string]CallType {

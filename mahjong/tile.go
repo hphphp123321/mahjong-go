@@ -75,12 +75,17 @@ func (tiles *MahjongTiles) Reset() {
 	tiles.rinshanPointer = 135
 }
 
-func (tiles *MahjongTiles) Setup() (tonTiles Tiles, nanTiles Tiles, shaaTiles Tiles, peiTiles Tiles) {
-	tonTiles = tiles.tiles[0:13]
-	nanTiles = tiles.tiles[13:26]
-	shaaTiles = tiles.tiles[26:39]
-	peiTiles = tiles.tiles[39:52]
-	return
+func (tiles *MahjongTiles) Setup() map[Wind]Tiles {
+	tonTiles := tiles.tiles[0:13]
+	nanTiles := tiles.tiles[13:26]
+	shaaTiles := tiles.tiles[26:39]
+	peiTiles := tiles.tiles[39:52]
+	return map[Wind]Tiles{
+		East:  tonTiles,
+		South: nanTiles,
+		West:  shaaTiles,
+		North: peiTiles,
+	}
 }
 
 func (tiles *MahjongTiles) DealTile(isRinshan bool) int {
