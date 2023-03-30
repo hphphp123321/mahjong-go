@@ -116,25 +116,25 @@ func (game *Game) ProcessOtherCall(pMain *Player, call *Call) {
 	}
 }
 
-func (game *Game) ProcessSelfCall(pMain *Player, call *Call) {
-	switch call.CallType {
-	case Discard:
-		game.DiscardTileProcess(pMain, call.CallTiles[0])
-	case ShouMinKan:
-		game.processShouMinKan(pMain, call)
-		game.breakIppatsu()
-		game.breakRyuukyoku()
-	case AnKan:
-		game.processAnKan(pMain, call)
-		game.breakIppatsu()
-		game.breakRyuukyoku()
-	case Riichi:
-		game.processRiichi(pMain, call)
-		game.breakIppatsu()
-	default:
-		panic("unknown call type")
-	}
-}
+//func (game *Game) ProcessSelfCall(pMain *Player, call *Call) {
+//	switch call.CallType {
+//	case Discard:
+//		game.DiscardTileProcess(pMain, call.CallTiles[0])
+//	case ShouMinKan:
+//		game.processShouMinKan(pMain, call)
+//		game.breakIppatsu()
+//		game.breakRyuukyoku()
+//	case AnKan:
+//		game.processAnKan(pMain, call)
+//		game.breakIppatsu()
+//		game.breakRyuukyoku()
+//	case Riichi:
+//		game.processRiichi(pMain, call)
+//		game.breakIppatsu()
+//	default:
+//		panic("unknown call type")
+//	}
+//}
 
 func (game *Game) GetTileProcess(pMain *Player, tileID int) {
 	if pMain.IsRiichi {
@@ -222,10 +222,12 @@ func (game *Game) JudgeDiscardCall(pMain *Player) Calls {
 
 func (game *Game) JudgeSelfCalls(pMain *Player) Calls {
 	var validCalls Calls
+	tsumo := game.JudgeTsumo(pMain)
 	riichi := game.judgeRiichi(pMain)
 	shouMinKan := game.judgeShouMinKan(pMain)
 	anKan := game.judgeAnKan(pMain)
 	discard := game.JudgeDiscardCall(pMain)
+	validCalls = append(validCalls, tsumo...)
 	validCalls = append(validCalls, riichi...)
 	validCalls = append(validCalls, shouMinKan...)
 	validCalls = append(validCalls, anKan...)
@@ -343,6 +345,41 @@ func (game *Game) processShouMinKan(pMain *Player, call *Call) {
 		return
 	}
 	panic("ShouMinKan not success!")
+}
+
+func (game *Game) JudgeTsumo(pMain *Player) Calls {
+	if pMain.ShantenNum != 0 {
+		return make(Calls, 0)
+	}
+	winTile := pMain.HandTiles[len(pMain.HandTiles)-1]
+	pMain.IsTsumo = true
+	if game.Tiles.allTiles[winTile].isLast {
+		pMain.IsHaitei = true
+	}
+	if game.Tiles.allTiles[winTile].isRinshan {
+		pMain.IsRinshan = true
+	}
+	if pMain.JunNum == 1 && pMain.IppatsuStatus {
+		if pMain.Wind == South {
+			pMain.IsTenhou = true
+		} else {
+			pMain.IsChiihou = true
+		}
+	}
+	result := game.getRonResult(pMain, winTile)
+	if result == nil {
+		pMain.IsTsumo = false
+		pMain.IsHaitei = false
+		pMain.IsRinshan = false
+		pMain.IsTenhou = false
+		pMain.IsChiihou = false
+		return make(Calls, 0)
+	}
+	return Calls{&Call{
+		CallType:         Tsumo,
+		CallTiles:        Tiles{winTile, -1, -1, -1},
+		CallTilesFromWho: []Wind{pMain.Wind, -1, -1, -1},
+	}}
 }
 
 func (game *Game) judgeRiichi(pMain *Player) Calls {
@@ -625,6 +662,15 @@ func (game *Game) getRonResult(pMain *Player, winTile int) (r *Result) {
 			r = nil
 		}
 	}()
+
+	// remove win tile from hand tiles, because the calculator will add it back
+	var handTiles Tiles
+	for _, tile := range pMain.HandTiles {
+		if tile != winTile {
+			handTiles = append(handTiles, tile)
+		}
+	}
+
 	ctx := &yaku.Context{
 		Tile:        IntToInstance(winTile),
 		SelfWind:    base.Wind(pMain.Wind),
@@ -641,12 +687,15 @@ func (game *Game) getRonResult(pMain *Player, winTile int) (r *Result) {
 		IsFirstTake: pMain.IsTenhou,
 		IsChankan:   pMain.IsChankan,
 	}
-	yakuResult := GetYakuResult(pMain.HandTiles, pMain.Melds, ctx)
+	yakuResult := GetYakuResult(handTiles, pMain.Melds, ctx)
 	if yakuResult == nil {
 		return nil
 	}
 	scoreResult := score.GetScoreByResult(game.rule.scoreRule, yakuResult, score.Honba(game.NumHonba))
-	return GenerateResult(yakuResult, &scoreResult)
+	return &Result{
+		YakuResult:  yakuResult,
+		ScoreResult: &scoreResult,
+	}
 }
 
 func (game *Game) GetNumRemainTiles() int {
@@ -687,4 +736,35 @@ func (game *Game) getCurrentRiichiNum() int {
 		}
 	}
 	return num
+}
+
+func (game *Game) processTsumo(pMain *Player, c *Call) *Result {
+	winTile := c.CallTiles[0]
+	pMain.IsTsumo = true
+	if game.Tiles.allTiles[winTile].isLast {
+		pMain.IsHaitei = true
+	}
+	if game.Tiles.allTiles[winTile].isRinshan {
+		pMain.IsRinshan = true
+	}
+	if pMain.IsRiichi {
+		if pMain.IppatsuStatus {
+			pMain.IsIppatsu = true
+		}
+	}
+	if pMain.JunNum == 1 && pMain.IppatsuStatus {
+		if pMain.Wind == South {
+			pMain.IsTenhou = true
+		} else {
+			pMain.IsChiihou = true
+		}
+	}
+	result := game.getRonResult(pMain, winTile)
+	return result
+}
+
+func (game *Game) processKyuShuKyuHai(main *Player, c *Call) *Result {
+	return &Result{
+		RyuuKyokuReason: RyuuKyokuKyuShuKyuHai,
+	}
 }

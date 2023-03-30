@@ -17,11 +17,12 @@ func (s *InitState) step() map[Wind]Calls {
 	s.g.NewGameRound()
 
 	initTiles := s.g.Tiles.Setup()
+
+	// generate event
 	var posEvent = make(map[Wind]Event)
 	for wind, player := range s.g.posPlayer {
 		player.HandTiles = initTiles[wind]
 		player.Wind = wind
-
 		posEvent[wind] = &EventStart{
 			WindRound: s.g.WindRound,
 			InitWind:  wind,
@@ -32,6 +33,7 @@ func (s *InitState) step() map[Wind]Calls {
 			InitTiles: initTiles[wind],
 		}
 	}
+	s.g.addPosEvent(posEvent)
 	return nil
 }
 
@@ -64,12 +66,73 @@ func (s *DealState) step() map[Wind]Calls {
 	if s.g.GetNumRemainTiles() == 0 {
 		return nil
 	}
+	tile := s.g.Tiles.DealTile(s.dealRinshan)
+	pMain := s.g.posPlayer[s.g.Position]
+	s.g.GetTileProcess(pMain, tile)
+	validActions := s.g.JudgeSelfCalls(pMain)
 
-	return nil
+	// generate event
+	var posEvent = make(map[Wind]Event)
+	for wind, _ := range s.g.posPlayer {
+		var t = -1
+		if wind == pMain.Wind {
+			t = tile
+		}
+		posEvent[wind] = &EventGet{
+			Who:  pMain.Wind,
+			Tile: t,
+		}
+	}
+	s.g.addPosEvent(posEvent)
+
+	return map[Wind]Calls{
+		pMain.Wind: validActions,
+	}
 }
 
 func (s *DealState) next(posCalls map[Wind]Call) error {
-	tile := s.g.Tiles.DealTile(s.dealRinshan)
+	if len(posCalls) != 1 {
+		return errors.New("invalid call nums")
+	}
+	call := posCalls[s.g.Position]
+	pMain := s.g.posPlayer[s.g.Position]
+	switch call.CallType {
+	case Discard:
+		s.g.DiscardTileProcess(pMain, call.CallTiles[0])
+		s.g.State = &DiscardState{
+			g: s.g,
+		}
+	case ShouMinKan:
+		s.g.processShouMinKan(pMain, &call)
+		s.g.breakIppatsu()
+		s.g.breakRyuukyoku()
+		s.g.State = &KanState{
+			g: s.g,
+		}
+	case AnKan:
+		s.g.processAnKan(pMain, &call)
+		s.g.breakIppatsu()
+		s.g.breakRyuukyoku()
+		s.g.State = &KanState{
+			g: s.g,
+		}
+	case Riichi:
+		s.g.processRiichi(pMain, &call)
+		s.g.breakIppatsu()
+		s.g.State = &RiichiState{
+			g: s.g,
+		}
+	case Tsumo:
+		result := s.g.processTsumo(pMain, &call)
+		s.g.State = &EndState{
+			g:      s.g,
+			result: result,
+		}
+	case KyuShuKyuHai:
+		s.g.processKyuShuKyuHai(pMain, &call)
+	default:
+		return errors.New("unknown call type")
+	}
 	return nil
 }
 
@@ -126,7 +189,8 @@ func (s *RiichiState) String() string {
 }
 
 type EndState struct {
-	g *Game
+	g      *Game
+	result *Result
 }
 
 func (s *EndState) step() map[Wind]Calls {
