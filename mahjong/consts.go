@@ -112,7 +112,8 @@ type RyuuKyokuReason int
 
 //go:generate stringer -type=RyuuKyokuReason
 const (
-	RyuuKyokuNormal RyuuKyokuReason = iota
+	NoRyuuKyoku RyuuKyokuReason = iota
+	RyuuKyokuNormal
 	RyuuKyokuKyuShuKyuHai
 	RyuuKyokuShuChaRiichi
 	RyuuKyokuSuuKaiKan
