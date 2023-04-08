@@ -116,7 +116,7 @@ const (
 	NoRyuuKyoku RyuuKyokuReason = iota
 	RyuuKyokuNormal
 	RyuuKyokuKyuShuKyuHai
-	RyuuKyokuShuChaRiichi
+	RyuuKyokuSuuChaRiichi
 	RyuuKyokuSuuKaiKan
 	RyuuKyokuSuufonRenda
 	RyuuKyokuSanChaHou

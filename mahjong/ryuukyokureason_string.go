@@ -11,13 +11,13 @@ func _() {
 	_ = x[NoRyuuKyoku-0]
 	_ = x[RyuuKyokuNormal-1]
 	_ = x[RyuuKyokuKyuShuKyuHai-2]
-	_ = x[RyuuKyokuShuChaRiichi-3]
+	_ = x[RyuuKyokuSuuChaRiichi-3]
 	_ = x[RyuuKyokuSuuKaiKan-4]
 	_ = x[RyuuKyokuSuufonRenda-5]
 	_ = x[RyuuKyokuSanChaHou-6]
 }
 
-const _RyuuKyokuReason_name = "NoRyuuKyokuRyuuKyokuNormalRyuuKyokuKyuShuKyuHaiRyuuKyokuShuChaRiichiRyuuKyokuSuuKaiKanRyuuKyokuSuufonRendaRyuuKyokuSanChaHou"
+const _RyuuKyokuReason_name = "NoRyuuKyokuRyuuKyokuNormalRyuuKyokuKyuShuKyuHaiRyuuKyokuSuuChaRiichiRyuuKyokuSuuKaiKanRyuuKyokuSuufonRendaRyuuKyokuSanChaHou"
 
 var _RyuuKyokuReason_index = [...]uint8{0, 11, 26, 47, 68, 86, 106, 124}
 

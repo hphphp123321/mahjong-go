@@ -410,7 +410,7 @@ func (game *Game) processShouMinKan(pMain *Player, call *Call) {
 	panic("ShouMinKan not success!")
 }
 
-func (game *Game) processKyuShuKyuHai(main *Player, c *Call) *Result {
+func (game *Game) processKyuShuKyuHai() *Result {
 	return &Result{
 		RyuuKyokuReason: RyuuKyokuKyuShuKyuHai,
 	}
@@ -827,6 +827,50 @@ func (game *Game) getRonResult(pMain *Player, winTile int) (r *Result) {
 		YakuResult:  yakuResult,
 		ScoreResult: &scoreResult,
 	}
+}
+
+func (game *Game) judgeSuuFonRenDa() bool {
+	var tileClass int = game.posPlayer[South].BoardTiles[len(game.posPlayer[South].BoardTiles)-1] / 4
+	if tileClass != 27 && tileClass != 28 && tileClass != 29 && tileClass != 30 {
+		return false
+	}
+	for _, player := range game.posPlayer {
+		if player.JunNum > 1 || player.JunNum == 0 {
+			return false
+		}
+		if !player.IppatsuStatus {
+			return false
+		}
+		if player.BoardTiles[len(player.BoardTiles)-1]/4 != tileClass {
+			return false
+		}
+	}
+	return true
+}
+
+func (game *Game) judgeSuuChaRiichi() bool {
+	var riiChiNum int
+	for _, player := range game.posPlayer {
+		if player.IsRiichi {
+			riiChiNum++
+		}
+	}
+	if riiChiNum < 4 {
+		return false
+	}
+	return true
+}
+
+func (game *Game) judgeSuuKaiKan() bool {
+	if game.Tiles.kanNum < 4 {
+		return false
+	}
+	for _, player := range game.posPlayer {
+		if player.KanNum == 4 {
+			return false
+		}
+	}
+	return true
 }
 
 func (game *Game) GetNumRemainTiles() int {

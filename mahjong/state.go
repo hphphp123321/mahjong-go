@@ -14,7 +14,7 @@ type InitState struct {
 
 func (s *InitState) step() map[Wind]Calls {
 	var validCalls = make(map[Wind]Calls)
-	for wind, _ := range s.g.posPlayer {
+	for wind := range s.g.posPlayer {
 		validCalls[wind] = Calls{
 			NewCall(Next, nil, nil),
 		}
@@ -70,14 +70,14 @@ type DealState struct {
 
 func (s *DealState) step() map[Wind]Calls {
 	if s.g.GetNumRemainTiles() == 0 {
-		return nil
+		return make(map[Wind]Calls)
 	}
 	tile := s.g.Tiles.DealTile(s.dealRinshan)
 	if s.dealRinshan {
 		// generate new indicator event
 		indicatorTileID := s.g.Tiles.GetCurrentIndicator()
 		var posEvent = make(map[Wind]Event)
-		for wind, _ := range s.g.posPlayer {
+		for wind := range s.g.posPlayer {
 			posEvent[wind] = &EventNewIndicator{
 				Tile: indicatorTileID,
 			}
@@ -91,7 +91,7 @@ func (s *DealState) step() map[Wind]Calls {
 
 	// generate event
 	var posEvent = make(map[Wind]Event)
-	for wind, _ := range s.g.posPlayer {
+	for wind := range s.g.posPlayer {
 		var t = -1
 		if wind == pMain.Wind {
 			t = tile
@@ -109,7 +109,23 @@ func (s *DealState) step() map[Wind]Calls {
 }
 
 func (s *DealState) next(posCalls map[Wind]*Call) error {
-	if len(posCalls) != 1 {
+	if len(posCalls) == 0 {
+		// normal ryuu kyoku
+		if s.g.GetNumRemainTiles() != 0 {
+			panic("remain tiles not 0")
+		}
+		s.g.State = &EndState{
+			g: s.g,
+			posResults: map[Wind]*Result{
+				East:  {RyuuKyokuReason: RyuuKyokuNormal},
+				South: {RyuuKyokuReason: RyuuKyokuNormal},
+				West:  {RyuuKyokuReason: RyuuKyokuNormal},
+				North: {RyuuKyokuReason: RyuuKyokuNormal},
+			},
+		}
+		return nil
+	}
+	if len(posCalls) > 1 {
 		return errors.New("invalid call nums")
 	}
 	call := posCalls[s.g.Position]
@@ -143,7 +159,7 @@ func (s *DealState) next(posCalls map[Wind]*Call) error {
 		s.g.processRiichiStep1(pMain, call)
 		// generate riichi event
 		var posEvent = make(map[Wind]Event)
-		for wind, _ := range s.g.posPlayer {
+		for wind := range s.g.posPlayer {
 			posEvent[wind] = &EventRiichi{
 				Who:  pMain.Wind,
 				Step: 1,
@@ -164,7 +180,11 @@ func (s *DealState) next(posCalls map[Wind]*Call) error {
 			posResults: map[Wind]*Result{pMain.Wind: result},
 		}
 	case KyuShuKyuHai:
-		s.g.processKyuShuKyuHai(pMain, call)
+		s.g.processKyuShuKyuHai()
+		s.g.State = &EndState{
+			g:          s.g,
+			posResults: map[Wind]*Result{pMain.Wind: {RyuuKyokuReason: RyuuKyokuKyuShuKyuHai}},
+		}
 	default:
 		return errors.New("unknown call type")
 	}
@@ -206,7 +226,7 @@ func (s *DiscardState) step() map[Wind]Calls {
 			Tile: s.tileID,
 		}
 	}
-	for wind, _ := range s.g.posPlayer {
+	for wind := range s.g.posPlayer {
 		posEvent[wind] = event
 	}
 	s.g.addPosEvent(posEvent)
@@ -243,6 +263,19 @@ func (s *DiscardState) next(posCalls map[Wind]*Call) error {
 
 	// if there is no call after discard, then next player deal
 	if posCalls == nil {
+		if s.g.judgeSuuChaRiichi() {
+			// if suu cha riichi
+			s.g.State = &EndState{
+				g: s.g,
+				posResults: map[Wind]*Result{
+					East:  {RyuuKyokuReason: RyuuKyokuSuuChaRiichi},
+					South: {RyuuKyokuReason: RyuuKyokuSuuChaRiichi},
+					West:  {RyuuKyokuReason: RyuuKyokuSuuChaRiichi},
+					North: {RyuuKyokuReason: RyuuKyokuSuuChaRiichi},
+				},
+			}
+			return nil
+		}
 
 		pMain := s.g.posPlayer[s.g.Position]
 		if pMain.RiichiStep == 1 {
@@ -250,7 +283,7 @@ func (s *DiscardState) next(posCalls map[Wind]*Call) error {
 			s.g.processRiichiStep2(pMain)
 			// generate riichi step 2 event
 			posEvent = make(map[Wind]Event)
-			for wind, _ := range s.g.posPlayer {
+			for wind := range s.g.posPlayer {
 				posEvent[wind] = &EventRiichi{
 					Who:  pMain.Wind,
 					Step: 2,
@@ -263,6 +296,7 @@ func (s *DiscardState) next(posCalls map[Wind]*Call) error {
 			s.g,
 			false,
 		}
+		return nil
 	}
 
 	// if there are calls, then process it
@@ -289,6 +323,21 @@ func (s *DiscardState) next(posCalls map[Wind]*Call) error {
 		}
 		return nil
 	} else {
+		// if max call is not ron
+		if s.g.judgeSuuChaRiichi() {
+			// if suu cha riichi
+			s.g.State = &EndState{
+				g: s.g,
+				posResults: map[Wind]*Result{
+					East:  {RyuuKyokuReason: RyuuKyokuSuuChaRiichi},
+					South: {RyuuKyokuReason: RyuuKyokuSuuChaRiichi},
+					West:  {RyuuKyokuReason: RyuuKyokuSuuChaRiichi},
+					North: {RyuuKyokuReason: RyuuKyokuSuuChaRiichi},
+				},
+			}
+			return nil
+		}
+
 		for wind, call := range posCalls {
 			player := s.g.posPlayer[wind]
 			if call.CallType != maxCallType {
@@ -306,12 +355,6 @@ func (s *DiscardState) next(posCalls map[Wind]*Call) error {
 				s.g.State = &KanState{
 					g:    s.g,
 					call: call,
-				}
-			case KyuShuKyuHai:
-				result := s.g.processKyuShuKyuHai(player, call)
-				s.g.State = &EndState{
-					g:          s.g,
-					posResults: map[Wind]*Result{wind: result},
 				}
 			default:
 				return errors.New("unknown call type")
@@ -354,7 +397,7 @@ func (s *ChiPonState) step() map[Wind]Calls {
 			Call: s.call,
 		}
 	}
-	for wind, _ := range s.g.posPlayer {
+	for wind := range s.g.posPlayer {
 		posEvent[wind] = event
 	}
 	s.g.addPosEvent(posEvent)
@@ -417,7 +460,7 @@ func (s *KanState) step() map[Wind]Calls {
 		}
 
 	}
-	for wind, _ := range s.g.posPlayer {
+	for wind := range s.g.posPlayer {
 		posEvent[wind] = kanEvent
 	}
 	s.g.addPosEvent(posEvent)
@@ -428,6 +471,18 @@ func (s *KanState) next(posCalls map[Wind]*Call) error {
 	// if there is no chan kan call
 	if len(posCalls) == 0 {
 		s.g.posPlayer[s.g.Position].KanNum++
+		if s.g.judgeSuuKaiKan() {
+			s.g.State = &EndState{
+				g: s.g,
+				posResults: map[Wind]*Result{
+					East:  {RyuuKyokuReason: RyuuKyokuSuuKaiKan},
+					South: {RyuuKyokuReason: RyuuKyokuSuuKaiKan},
+					West:  {RyuuKyokuReason: RyuuKyokuSuuKaiKan},
+					North: {RyuuKyokuReason: RyuuKyokuSuuKaiKan},
+				},
+			}
+			return nil
+		}
 		s.g.State = &DealState{
 			g:           s.g,
 			dealRinshan: true,
@@ -449,26 +504,6 @@ func (s *KanState) next(posCalls map[Wind]*Call) error {
 
 func (s *KanState) String() string {
 	return "Call"
-}
-
-type RiichiState struct {
-	g          *Game
-	riichiStep int
-	tileID     int
-}
-
-// after one player claim riichi
-func (s *RiichiState) step() map[Wind]Calls {
-
-	return nil
-}
-
-func (s *RiichiState) next(posCalls map[Wind]*Call) error {
-	return nil
-}
-
-func (s *RiichiState) String() string {
-	return "Riichi"
 }
 
 type EndState struct {
