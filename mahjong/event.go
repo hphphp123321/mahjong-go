@@ -406,7 +406,8 @@ func (event *EventAnKan) UnmarshalJSON(data []byte) error {
 }
 
 type EventRiichi struct {
-	Who Wind `json:"who"`
+	Who  Wind `json:"who"`
+	Step int  `json:"step"`
 }
 
 func (event *EventRiichi) GetType() EventType {
@@ -415,20 +416,24 @@ func (event *EventRiichi) GetType() EventType {
 
 func (event *EventRiichi) MarshalJSON() ([]byte, error) {
 	return json.Marshal(&struct {
-		Who string `json:"who"`
+		Who  string `json:"who"`
+		Step int    `json:"step"`
 	}{
-		Who: event.Who.String(),
+		Who:  event.Who.String(),
+		Step: event.Step,
 	})
 }
 
 func (event *EventRiichi) UnmarshalJSON(data []byte) error {
 	var tmp struct {
-		Who string `json:"who"`
+		Who  string `json:"who"`
+		Step int    `json:"step"`
 	}
 	if err := json.Unmarshal(data, &tmp); err != nil {
 		return err
 	}
 	event.Who = MapStringToWind[tmp.Who]
+	event.Step = tmp.Step
 	return nil
 }
 
@@ -699,5 +704,37 @@ func (event *EventEnd) UnmarshalJSON(data []byte) error {
 		pointsChange[MapStringToWind[k]] = v
 	}
 	event.PointsChange = pointsChange
+	return nil
+}
+
+type EventFuriten struct {
+	Who           Wind          `json:"who"`
+	FuritenReason FuritenReason `json:"furitenReason"`
+}
+
+func (event *EventFuriten) GetType() EventType {
+	return EventTypeFuriten
+}
+
+func (event *EventFuriten) MarshalJSON() ([]byte, error) {
+	return json.Marshal(&struct {
+		Who           string `json:"who"`
+		FuritenReason string `json:"furitenReason"`
+	}{
+		Who:           event.Who.String(),
+		FuritenReason: event.FuritenReason.String(),
+	})
+}
+
+func (event *EventFuriten) UnmarshalJSON(data []byte) error {
+	var tmp struct {
+		Who           string `json:"who"`
+		FuritenReason string `json:"furitenReason"`
+	}
+	if err := json.Unmarshal(data, &tmp); err != nil {
+		return err
+	}
+	event.Who = MapStringToWind[tmp.Who]
+	event.FuritenReason = MapStringToFuritenReason[tmp.FuritenReason]
 	return nil
 }

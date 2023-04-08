@@ -12,7 +12,7 @@ type Player struct {
 	KanNum          int
 	HandTiles       Tiles
 	DiscardTiles    Tiles
-	TilesTsumoGiri  []int
+	TilesTsumoGiri  []bool
 	BoardTiles      Tiles
 	Melds           Calls
 	TenhaiTiles     Tiles
@@ -109,7 +109,7 @@ func (player *Player) ResetForRound() {
 	player.KanNum = 0
 	player.HandTiles = make(Tiles, 0, 14)
 	player.DiscardTiles = make(Tiles, 0, 25)
-	player.TilesTsumoGiri = make([]int, 0, 25)
+	player.TilesTsumoGiri = make([]bool, 0, 25)
 	player.BoardTiles = make(Tiles, 0, 25)
 	player.Melds = make(Calls, 0, 4)
 	player.TenhaiTiles = make(Tiles, 0, 13)

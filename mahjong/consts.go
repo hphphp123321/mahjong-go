@@ -98,6 +98,7 @@ const (
 	EventTypeRyuuKyoku
 	EventTypeStart
 	EventTypeEnd
+	EventTypeFuriten
 )
 
 var MapStringToEventType = func() map[string]EventType {
@@ -124,6 +125,24 @@ const (
 var MapStringToRyuuKyokuReason = func() map[string]RyuuKyokuReason {
 	m := make(map[string]RyuuKyokuReason)
 	for i := RyuuKyokuNormal; i <= RyuuKyokuSanChaHou; i++ {
+		m[i.String()] = i
+	}
+	return m
+}()
+
+type FuritenReason int
+
+//go:generate stringer -type=FuritenReason
+const (
+	FuritenNone FuritenReason = iota
+	FuritenJun
+	FuritenDiscard
+	FuritenRiichi
+)
+
+var MapStringToFuritenReason = func() map[string]FuritenReason {
+	m := make(map[string]FuritenReason)
+	for i := FuritenJun; i <= FuritenRiichi; i++ {
 		m[i.String()] = i
 	}
 	return m
