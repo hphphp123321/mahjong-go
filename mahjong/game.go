@@ -27,8 +27,8 @@ type Game struct {
 
 	WindRound WindRound // {0:东一, 1:东二, 2:东三, 3:东四, 4:南一, 5:南二, 6:南三, 7:南四(all last), 8:西一(西入条件)...}
 	NumGame   int
-	NumRiichi int
-	NumHonba  int
+	NumRiichi int // riichi sticks num
+	NumHonba  int // honba num
 
 	Position Wind
 
@@ -92,29 +92,29 @@ func (game *Game) Reset(playerSlice []*Player) {
 	game.posPlayer = map[Wind]*Player{0: playerSlice[0], 1: playerSlice[1], 2: playerSlice[2], 3: playerSlice[3]}
 }
 
-func (game *Game) ProcessOtherCall(pMain *Player, call *Call) {
-	switch call.CallType {
-	case Skip:
-		return
-	case Chi:
-		game.processChi(pMain, call)
-		game.Position = pMain.Wind
-		game.breakIppatsu()
-		game.breakRyuukyoku()
-	case Pon:
-		game.processPon(pMain, call)
-		game.Position = pMain.Wind
-		game.breakIppatsu()
-		game.breakRyuukyoku()
-	case DaiMinKan:
-		game.processDaiMinKan(pMain, call)
-		game.Position = pMain.Wind
-		game.breakIppatsu()
-		game.breakRyuukyoku()
-	default:
-		panic("unknown call type")
-	}
-}
+//func (game *Game) ProcessOtherCall(pMain *Player, call *Call) {
+//	switch call.CallType {
+//	case Skip:
+//		return
+//	case Chi:
+//		game.processChi(pMain, call)
+//		game.Position = pMain.Wind
+//		game.breakIppatsu()
+//		game.breakRyuukyoku()
+//	case Pon:
+//		game.processPon(pMain, call)
+//		game.Position = pMain.Wind
+//		game.breakIppatsu()
+//		game.breakRyuukyoku()
+//	case DaiMinKan:
+//		game.processDaiMinKan(pMain, call)
+//		game.Position = pMain.Wind
+//		game.breakIppatsu()
+//		game.breakRyuukyoku()
+//	default:
+//		panic("unknown call type")
+//	}
+//}
 
 //func (game *Game) ProcessSelfCall(pMain *Player, call *Call) {
 //	switch call.CallType {
@@ -161,9 +161,9 @@ func (game *Game) DiscardTileProcess(pMain *Player, tileID int) {
 		panic("Illegal Discard ID")
 	}
 	if tileID == pMain.HandTiles[len(pMain.HandTiles)-1] {
-		pMain.TilesTsumoGiri = append(pMain.TilesTsumoGiri, 1)
+		pMain.TilesTsumoGiri = append(pMain.TilesTsumoGiri, true)
 	} else {
-		pMain.TilesTsumoGiri = append(pMain.TilesTsumoGiri, 0)
+		pMain.TilesTsumoGiri = append(pMain.TilesTsumoGiri, false)
 	}
 	pMain.HandTiles = pMain.HandTiles.Remove(tileID)
 	pMain.DiscardTiles = append(pMain.DiscardTiles, tileID)
@@ -250,15 +250,78 @@ func (game *Game) JudgeOtherCalls(pMain *Player, tileID int) Calls {
 	return validCalls
 }
 
-func (game *Game) processRiichi(pMain *Player, call *Call) {
+func (game *Game) processChanKan(pMain *Player, call *Call) *Result {
+	winTile := call.CallTiles[0]
+	pMain.IsChankan = true
+	if pMain.IsRiichi && pMain.IppatsuStatus {
+		pMain.IsIppatsu = true
+	}
+	result := game.getRonResult(pMain, winTile)
+	if result == nil {
+		panic("chan kan result error")
+	}
+	result.RonType = ChanKan
+	return result
+}
+
+func (game *Game) processTsumo(pMain *Player, call *Call) *Result {
+	winTile := call.CallTiles[0]
+	pMain.IsTsumo = true
+	if game.Tiles.allTiles[winTile].isLast {
+		pMain.IsHaitei = true
+	}
+	if game.Tiles.allTiles[winTile].isRinshan {
+		pMain.IsRinshan = true
+	}
+	if pMain.IsRiichi && pMain.IppatsuStatus {
+		pMain.IsIppatsu = true
+	}
+	if pMain.JunNum == 1 && pMain.IppatsuStatus {
+		if pMain.Wind == 0 {
+			pMain.IsTenhou = true
+		} else {
+			pMain.IsChiihou = true
+		}
+	}
+	result := game.getRonResult(pMain, winTile)
+	if result == nil {
+		panic("tsumo result is nil")
+	}
+	result.RonType = Tsumo
+	return result
+}
+
+func (game *Game) processRon(pMain *Player, call *Call) *Result {
+	winTile := call.CallTiles[0]
+	if game.Tiles.allTiles[winTile].isLast {
+		pMain.IsHoutei = true
+	}
+	if pMain.IsRiichi && pMain.IppatsuStatus {
+		pMain.IsIppatsu = true
+	}
+	result := game.getRonResult(pMain, winTile)
+	if result == nil {
+		panic("ron result is nil")
+	}
+	result.RonType = Ron
+	return result
+}
+
+func (game *Game) processRiichiStep1(pMain *Player, call *Call) {
 	if pMain.JunNum == 1 && pMain.IppatsuStatus {
 		pMain.IsDaburuRiichi = true
 	}
+	pMain.RiichiStep = 1
 	pMain.IsRiichi = true
 	riichiTile := call.CallTiles[0]
-	pMain.Points -= 1000
 	game.DiscardTileProcess(pMain, riichiTile)
 	pMain.IppatsuStatus = true
+}
+
+func (game *Game) processRiichiStep2(pMain *Player) {
+	pMain.RiichiStep = 2
+	pMain.Points -= 1000
+	game.NumRiichi++
 }
 
 func (game *Game) processChi(pMain *Player, call *Call) {
@@ -345,6 +408,12 @@ func (game *Game) processShouMinKan(pMain *Player, call *Call) {
 		return
 	}
 	panic("ShouMinKan not success!")
+}
+
+func (game *Game) processKyuShuKyuHai(main *Player, c *Call) *Result {
+	return &Result{
+		RyuuKyokuReason: RyuuKyokuKyuShuKyuHai,
+	}
 }
 
 func (game *Game) judgeRon(pMain *Player, tileID int) Calls {
@@ -798,35 +867,4 @@ func (game *Game) getCurrentRiichiNum() int {
 		}
 	}
 	return num
-}
-
-func (game *Game) processTsumo(pMain *Player, c *Call) *Result {
-	winTile := c.CallTiles[0]
-	pMain.IsTsumo = true
-	if game.Tiles.allTiles[winTile].isLast {
-		pMain.IsHaitei = true
-	}
-	if game.Tiles.allTiles[winTile].isRinshan {
-		pMain.IsRinshan = true
-	}
-	if pMain.IsRiichi {
-		if pMain.IppatsuStatus {
-			pMain.IsIppatsu = true
-		}
-	}
-	if pMain.JunNum == 1 && pMain.IppatsuStatus {
-		if pMain.Wind == South {
-			pMain.IsTenhou = true
-		} else {
-			pMain.IsChiihou = true
-		}
-	}
-	result := game.getRonResult(pMain, winTile)
-	return result
-}
-
-func (game *Game) processKyuShuKyuHai(main *Player, c *Call) *Result {
-	return &Result{
-		RyuuKyokuReason: RyuuKyokuKyuShuKyuHai,
-	}
 }

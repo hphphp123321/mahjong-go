@@ -129,11 +129,14 @@ func (tiles *MahjongTiles) UraDoraIndicators() Tiles {
 	return t
 }
 
+func (tiles *MahjongTiles) GetCurrentIndicator() int {
+	return tiles.DoraIndicators()[tiles.kanNum]
+}
+
 func (tiles Tiles) Remove(tile int) Tiles {
 	for i := 0; i < len(tiles); i++ {
 		if tiles[i] == tile {
-			tiles = append(tiles[:i], tiles[i+1:]...)
-			return tiles
+			return append(tiles[:i], tiles[i+1:]...)
 		}
 	}
 	panic("tile" + string(rune(tile)) + "not in tiles")
