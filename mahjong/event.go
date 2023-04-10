@@ -577,6 +577,7 @@ func (event *EventChanKan) UnmarshalJSON(data []byte) error {
 type EventRyuuKyoku struct {
 	Who       Wind            `json:"who,omitempty"`
 	HandTiles Tiles           `json:"hand_tiles,omitempty"`
+	TenHai    []int           `json:"ten_hai,omitempty"`
 	Reason    RyuuKyokuReason `json:"reason,int"`
 }
 
@@ -588,10 +589,12 @@ func (event *EventRyuuKyoku) MarshalJSON() ([]byte, error) {
 	return json.Marshal(&struct {
 		Who       string `json:"who,omitempty"`
 		HandTiles []int  `json:"hand_tiles,omitempty"`
+		Tenhai    []int  `json:"ten_hai,omitempty"`
 		Reason    string `json:"reason"`
 	}{
 		Who:       event.Who.String(),
 		HandTiles: event.HandTiles,
+		Tenhai:    event.TenHai,
 		Reason:    event.Reason.String(),
 	})
 }
@@ -600,6 +603,7 @@ func (event *EventRyuuKyoku) UnmarshalJSON(data []byte) error {
 	var tmp struct {
 		Who       string `json:"who,omitempty"`
 		HandTiles []int  `json:"hand_tiles,omitempty"`
+		TenHai    []int  `json:"ten_hai,omitempty"`
 		Reason    string `json:"reason"`
 	}
 	if err := json.Unmarshal(data, &tmp); err != nil {
@@ -610,6 +614,7 @@ func (event *EventRyuuKyoku) UnmarshalJSON(data []byte) error {
 	event.Who = who
 	event.Reason = reason
 	event.HandTiles = tmp.HandTiles
+	event.TenHai = tmp.TenHai
 	return nil
 }
 
@@ -736,5 +741,32 @@ func (event *EventFuriten) UnmarshalJSON(data []byte) error {
 	}
 	event.Who = MapStringToWind[tmp.Who]
 	event.FuritenReason = MapStringToFuritenReason[tmp.FuritenReason]
+	return nil
+}
+
+type EventNagashiMangan struct {
+	Who Wind `json:"who"`
+}
+
+func (event *EventNagashiMangan) GetType() EventType {
+	return EventTypeNagashiMangan
+}
+
+func (event *EventNagashiMangan) MarshalJSON() ([]byte, error) {
+	return json.Marshal(&struct {
+		Who string `json:"who"`
+	}{
+		Who: event.Who.String(),
+	})
+}
+
+func (event *EventNagashiMangan) UnmarshalJSON(data []byte) error {
+	var tmp struct {
+		Who string `json:"who"`
+	}
+	if err := json.Unmarshal(data, &tmp); err != nil {
+		return err
+	}
+	event.Who = MapStringToWind[tmp.Who]
 	return nil
 }

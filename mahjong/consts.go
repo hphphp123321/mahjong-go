@@ -72,7 +72,7 @@ const (
 
 var MapStringToCallType = func() map[string]CallType {
 	m := make(map[string]CallType)
-	for i := Get; i <= ChanKan; i++ {
+	for i := Get; i <= Next; i++ {
 		m[i.String()] = i
 	}
 	return m
@@ -99,11 +99,12 @@ const (
 	EventTypeStart
 	EventTypeEnd
 	EventTypeFuriten
+	EventTypeNagashiMangan
 )
 
 var MapStringToEventType = func() map[string]EventType {
 	m := make(map[string]EventType)
-	for i := EventTypeGet; i <= EventTypeRyuuKyoku; i++ {
+	for i := EventTypeGet; i <= EventTypeNagashiMangan; i++ {
 		m[i.String()] = i
 	}
 	return m

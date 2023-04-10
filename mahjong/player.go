@@ -138,3 +138,15 @@ func (player *Player) ResetForGame() {
 	player.Points = 25000
 	player.ResetForRound()
 }
+
+func (player *Player) judgeNagashiMangan() bool {
+	if len(player.BoardTiles) != len(player.DiscardTiles) {
+		return false
+	}
+	for _, tileID := range player.DiscardTiles {
+		if !common.Contain(tileID/4, YaoKyuTiles) {
+			return false
+		}
+	}
+	return true
+}

@@ -737,6 +737,25 @@ func (game *Game) judgeAnKan(pMain *Player) Calls {
 				CallTiles:        Tiles{pMain.HandTiles[a], pMain.HandTiles[b], pMain.HandTiles[c], pMain.HandTiles[d]},
 				CallTilesFromWho: []Wind{pMain.Wind, pMain.Wind, pMain.Wind, pMain.Wind},
 			}
+			if pMain.IsRiichi {
+				// judge ankan when player riichi
+				// if a riichi player has 4 same tiles in hand but not draw the 4th tile, then this ankan is not valid
+				if d != len(pMain.HandTiles)-1 {
+					continue
+				}
+				// if a riichi player's tenhai changed after ankan, then this ankan is not valid
+				tenhaiSlice := pMain.TenhaiSlice
+				tmpHandTiles := pMain.HandTiles.Copy()
+				tmpHandTiles = append(tmpHandTiles[:a], tmpHandTiles[a+1:]...)
+				tmpHandTiles = append(tmpHandTiles[:b], tmpHandTiles[b+1:]...)
+				tmpHandTiles = append(tmpHandTiles[:c], tmpHandTiles[c+1:]...)
+				tmpHandTiles = append(tmpHandTiles[:d], tmpHandTiles[d+1:]...)
+				melds := Calls{&posCall}
+				tenhaiSliceAfterKan := GetTenhaiSlice(tmpHandTiles, melds)
+				if !common.Equal(tenhaiSlice, tenhaiSliceAfterKan) {
+					continue
+				}
+			}
 			posCalls = append(posCalls, &posCall)
 		}
 	}
@@ -808,7 +827,7 @@ func (game *Game) getRonResult(pMain *Player, winTile int) (r *Result) {
 		RoundWind:   base.Wind(game.WindRound / 4),
 		DoraTiles:   IntsToTiles(IndicatorsToDora(game.Tiles.DoraIndicators())),
 		UraTiles:    IntsToTiles(IndicatorsToDora(game.Tiles.UraDoraIndicators())),
-		Rules:       game.rule.yakuRule,
+		Rules:       game.rule.YakuRule,
 		IsTsumo:     pMain.IsTsumo,
 		IsRiichi:    pMain.IsRiichi,
 		IsIpatsu:    pMain.IsIppatsu,
@@ -822,7 +841,7 @@ func (game *Game) getRonResult(pMain *Player, winTile int) (r *Result) {
 	if yakuResult == nil {
 		return nil
 	}
-	scoreResult := score.GetScoreByResult(game.rule.scoreRule, yakuResult, score.Honba(game.NumHonba))
+	scoreResult := score.GetScoreByResult(game.rule.ScoreRule, yakuResult, score.Honba(game.NumHonba))
 	return &Result{
 		YakuResult:  yakuResult,
 		ScoreResult: &scoreResult,
@@ -911,4 +930,157 @@ func (game *Game) getCurrentRiichiNum() int {
 		}
 	}
 	return num
+}
+
+// judgeNagashiMangan judge nagashi mangan(ryuu kyoku mangan for 8000 points)
+func (game *Game) judgeNagashiMangan() []Wind {
+	if game.Tiles.NumRemainTiles != 0 {
+		panic("the number of remain tiles is not 0")
+	}
+	var retSlice []Wind
+	for wind, player := range game.posPlayer {
+		if player.judgeNagashiMangan() {
+			retSlice = append(retSlice, wind)
+		}
+	}
+	return retSlice
+}
+
+func (game *Game) CheckGameEnd() bool {
+	for _, player := range game.posPlayer {
+		if player.Points < 0 {
+			// player is bankrupt
+			return true
+		}
+	}
+	if game.WindRound < WindRound(game.rule.GameLength) {
+		return false
+	} else if game.WindRound > WindRoundNorth4 {
+		return true
+	} else {
+		for _, player := range game.posPlayer {
+			// the first player's points over 30000
+			if player.Points >= 30000 {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func (game *Game) processNagashiMangan(winds []Wind) {
+	otherWinds := []Wind{0, 1, 2, 3}
+	for _, wind := range winds {
+		for i, v := range otherWinds {
+			if v == wind {
+				otherWinds = append(otherWinds[:i], otherWinds[i+1:]...)
+			}
+		}
+	}
+	if len(winds) == 1 {
+		// only one player nagashi mangan
+		wind := winds[0]
+		if wind == East {
+			game.posPlayer[East].Points += 12000 + game.NumHonba*300 + game.NumRiichi*1000
+			for _, w := range otherWinds {
+				game.posPlayer[w].Points -= 4000 + game.NumHonba*100
+			}
+		} else {
+			game.posPlayer[wind].Points += 8000 + game.NumHonba*300 + game.NumRiichi*1000
+			for _, w := range otherWinds {
+				if w == East {
+					game.posPlayer[w].Points -= 4000 + game.NumHonba*100
+				} else {
+					game.posPlayer[w].Points -= 2000 + game.NumHonba*100
+				}
+			}
+		}
+	} else if len(winds) == 2 {
+		// two players nagashi mangan
+		wind0 := winds[0]
+		wind1 := winds[1]
+		if wind0 == 0 {
+			game.posPlayer[wind0].Points += 12000 - 4000 + game.NumHonba*300 + game.NumRiichi*1000
+			game.posPlayer[wind1].Points += 8000 - 4000 + game.NumHonba*300
+			for _, w := range otherWinds {
+				game.posPlayer[w].Points -= 4000 + 2000 + game.NumHonba*300
+			}
+		} else {
+			game.posPlayer[wind0].Points += 8000 - 2000 + game.NumHonba*300 + game.NumRiichi*1000
+			game.posPlayer[wind1].Points += 8000 - 2000 + game.NumHonba*300
+			for _, w := range otherWinds {
+				if w == East {
+					game.posPlayer[w].Points -= 4000 + 4000 + game.NumHonba*300
+				} else {
+					game.posPlayer[w].Points -= 2000 + 2000 + game.NumHonba*300
+				}
+			}
+		}
+	} else {
+		// three players nagashi mangan
+		wind0 := winds[0]
+		wind1 := winds[1]
+		wind2 := winds[2]
+		otherWind := otherWinds[0]
+		if wind0 == 0 {
+			game.posPlayer[wind0].Points += 12000 - 4000 - 4000 + game.NumHonba*300 + game.NumRiichi*1000
+			game.posPlayer[wind1].Points += 8000 - 4000 - 2000 + game.NumHonba*300
+			game.posPlayer[wind2].Points += 8000 - 4000 - 2000 + game.NumHonba*300
+			game.posPlayer[otherWind].Points -= 4000 + 2000 + 2000 + game.NumHonba*900
+		} else {
+			game.posPlayer[wind0].Points += 8000 - 2000 - 2000 + game.NumHonba*300 + game.NumRiichi*1000
+			game.posPlayer[wind1].Points += 8000 - 2000 - 2000 + game.NumHonba*300
+			game.posPlayer[wind2].Points += 8000 - 2000 - 2000 + game.NumHonba*300
+			game.posPlayer[otherWind].Points -= 4000 + 4000 + 4000 + game.NumHonba*900
+		}
+	}
+}
+
+// judgeTenHaiWinds returns the winds of players who have ten hai in the ryuukyoku situation.
+func (game *Game) judgeTenHaiWinds() []Wind {
+	var retSlice []Wind
+	for wind, player := range game.posPlayer {
+		if len(player.TenhaiSlice) > 0 {
+			retSlice = append(retSlice, wind)
+		}
+	}
+	return retSlice
+}
+
+func (game *Game) processNormalRyuuKyoku(winds []Wind) {
+	otherWinds := []Wind{0, 1, 2, 3}
+	for _, wind := range winds {
+		for i, v := range otherWinds {
+			if v == wind {
+				otherWinds = append(otherWinds[:i], otherWinds[i+1:]...)
+			}
+		}
+	}
+	if len(winds) == 1 {
+		// one player tenhai
+		wind := winds[0]
+		game.posPlayer[wind].Points += 3000
+		for _, w := range otherWinds {
+			game.posPlayer[w].Points -= 1000
+		}
+	} else if len(winds) == 2 {
+		// two players tenhai
+		wind0 := winds[0]
+		wind1 := winds[1]
+		game.posPlayer[wind0].Points += 1500
+		game.posPlayer[wind1].Points += 1500
+		for _, w := range otherWinds {
+			game.posPlayer[w].Points -= 1500
+		}
+	} else {
+		// three players tenhai
+		wind0 := winds[0]
+		wind1 := winds[1]
+		wind2 := winds[2]
+		otherWind := otherWinds[0]
+		game.posPlayer[wind0].Points += 1000
+		game.posPlayer[wind1].Points += 1000
+		game.posPlayer[wind2].Points += 1000
+		game.posPlayer[otherWind].Points -= 3000
+	}
 }

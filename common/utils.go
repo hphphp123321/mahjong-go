@@ -108,3 +108,40 @@ func Remove(obj interface{}, target interface{}) (interface{}, error) {
 	}
 	return nil, errors.New("cannot delete: value not found")
 }
+
+func Equal(obj1 interface{}, obj2 interface{}) bool {
+	value1 := reflect.ValueOf(obj1)
+	value2 := reflect.ValueOf(obj2)
+
+	kind1 := value1.Kind()
+	kind2 := value2.Kind()
+
+	if kind1 != kind2 {
+		return false
+	}
+
+	switch kind1 {
+	case reflect.Slice, reflect.Array:
+		if value1.Len() != value2.Len() {
+			return false
+		}
+		for i := 0; i < value1.Len(); i++ {
+			if value1.Index(i).Interface() != value2.Index(i).Interface() {
+				return false
+			}
+		}
+	case reflect.Map:
+		if value1.Len() != value2.Len() {
+			return false
+		}
+		for _, key := range value1.MapKeys() {
+			if !value2.MapIndex(key).IsValid() || value1.MapIndex(key).Interface() != value2.MapIndex(key).Interface() {
+				return false
+			}
+		}
+	default:
+		return false
+	}
+
+	return true
+}

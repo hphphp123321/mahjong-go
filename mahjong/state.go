@@ -1,6 +1,9 @@
 package mahjong
 
-import "errors"
+import (
+	"errors"
+	"github.com/hphphp123321/mahjong-go/common"
+)
 
 type gameState interface {
 	step() map[Wind]Calls
@@ -261,6 +264,7 @@ func (s *DiscardState) next(posCalls map[Wind]*Call) error {
 		})
 	}
 
+	pMain := s.g.posPlayer[s.g.Position]
 	// if there is no call after discard, then next player deal
 	if posCalls == nil {
 		if s.g.judgeSuuChaRiichi() {
@@ -277,7 +281,6 @@ func (s *DiscardState) next(posCalls map[Wind]*Call) error {
 			return nil
 		}
 
-		pMain := s.g.posPlayer[s.g.Position]
 		if pMain.RiichiStep == 1 {
 			var posEvent map[Wind]Event
 			s.g.processRiichiStep2(pMain)
@@ -342,6 +345,19 @@ func (s *DiscardState) next(posCalls map[Wind]*Call) error {
 			player := s.g.posPlayer[wind]
 			if call.CallType != maxCallType {
 				continue
+			}
+			if pMain.RiichiStep == 1 {
+				var posEvent map[Wind]Event
+				s.g.processRiichiStep2(pMain)
+				// generate riichi step 2 event
+				posEvent = make(map[Wind]Event)
+				for wind := range s.g.posPlayer {
+					posEvent[wind] = &EventRiichi{
+						Who:  pMain.Wind,
+						Step: 2,
+					}
+				}
+				s.g.addPosEvent(posEvent)
 			}
 			switch call.CallType {
 			case Chi, Pon:
@@ -512,7 +528,64 @@ type EndState struct {
 }
 
 func (s *EndState) step() map[Wind]Calls {
-	return nil
+
+	if len(s.posResults) == 4 {
+		// ryuu kyoku
+		var posEvent = make(map[Wind]Event)
+		if s.posResults[East].RyuuKyokuReason == RyuuKyokuNormal {
+			tenhaiWinds := s.g.judgeTenHaiWinds()
+
+			if s.g.rule.NagashiMangan {
+				// judge ryuu kyoku mangan
+				bSlice := s.g.judgeNagashiMangan()
+				if len(bSlice) != 0 {
+					s.g.processNagashiMangan(bSlice)
+					// generate nagashi mangan events
+
+				} else {
+					s.g.processNormalRyuuKyoku(tenhaiWinds)
+				}
+			} else {
+				// process normal ryuu kyoku
+				s.g.processNormalRyuuKyoku(tenhaiWinds)
+			}
+
+			if !common.Contain(tenhaiWinds, East) {
+				// east not ten hai
+				s.g.WindRound++
+			}
+			s.g.NumHonba++
+
+		} else {
+			// process special ryuu kyoku
+			s.g.NumHonba++
+		}
+
+		for wind, result := range s.posResults {
+			posEvent[wind] = &EventRyuuKyoku{
+				Who:    wind,
+				Reason: result.RyuuKyokuReason,
+			}
+		}
+		s.g.addPosEvent(posEvent)
+	} else if len(s.posResults) == 3 {
+		// san cha ron
+		var posEvent = make(map[Wind]Event)
+		if !s.g.rule.SanChaRon {
+
+		}
+
+	}
+
+	if s.g.CheckGameEnd() {
+		return make(map[Wind]Calls)
+	}
+	return map[Wind]Calls{
+		East:  {NewCall(Next, nil, nil)},
+		South: {NewCall(Next, nil, nil)},
+		West:  {NewCall(Next, nil, nil)},
+		North: {NewCall(Next, nil, nil)},
+	}
 }
 
 func (s *EndState) next(posCalls map[Wind]*Call) error {
