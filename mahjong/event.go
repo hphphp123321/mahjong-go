@@ -15,23 +15,26 @@ type Event interface {
 }
 
 var eventTypes = map[string]reflect.Type{
-	EventTypeGet.String():          reflect.TypeOf(EventGet{}),
-	EventTypeTsumoGiri.String():    reflect.TypeOf(EventTsumoGiri{}),
-	EventTypeRiichi.String():       reflect.TypeOf(EventRiichi{}),
-	EventTypeDiscard.String():      reflect.TypeOf(EventDiscard{}),
-	EventTypeChi.String():          reflect.TypeOf(EventChi{}),
-	EventTypePon.String():          reflect.TypeOf(EventPon{}),
-	EventTypeAnKan.String():        reflect.TypeOf(EventAnKan{}),
-	EventTypeShouMinKan.String():   reflect.TypeOf(EventShouMinKan{}),
-	EventTypeDaiMinKan.String():    reflect.TypeOf(EventDaiMinKan{}),
-	EventTypeRon.String():          reflect.TypeOf(EventRon{}),
-	EventTypeTsumo.String():        reflect.TypeOf(EventTsumo{}),
-	EventTypeChanKan.String():      reflect.TypeOf(EventChanKan{}),
-	EventTypeRiichi.String():       reflect.TypeOf(EventRiichi{}),
-	EventTypeNewIndicator.String(): reflect.TypeOf(EventNewIndicator{}),
-	EventTypeRyuuKyoku.String():    reflect.TypeOf(EventRyuuKyoku{}),
-	EventTypeStart.String():        reflect.TypeOf(EventStart{}),
-	EventTypeEnd.String():          reflect.TypeOf(EventEnd{}),
+	EventTypeGet.String():           reflect.TypeOf(EventGet{}),
+	EventTypeTsumoGiri.String():     reflect.TypeOf(EventTsumoGiri{}),
+	EventTypeRiichi.String():        reflect.TypeOf(EventRiichi{}),
+	EventTypeDiscard.String():       reflect.TypeOf(EventDiscard{}),
+	EventTypeChi.String():           reflect.TypeOf(EventChi{}),
+	EventTypePon.String():           reflect.TypeOf(EventPon{}),
+	EventTypeAnKan.String():         reflect.TypeOf(EventAnKan{}),
+	EventTypeShouMinKan.String():    reflect.TypeOf(EventShouMinKan{}),
+	EventTypeDaiMinKan.String():     reflect.TypeOf(EventDaiMinKan{}),
+	EventTypeRon.String():           reflect.TypeOf(EventRon{}),
+	EventTypeTsumo.String():         reflect.TypeOf(EventTsumo{}),
+	EventTypeChanKan.String():       reflect.TypeOf(EventChanKan{}),
+	EventTypeRiichi.String():        reflect.TypeOf(EventRiichi{}),
+	EventTypeNewIndicator.String():  reflect.TypeOf(EventNewIndicator{}),
+	EventTypeRyuuKyoku.String():     reflect.TypeOf(EventRyuuKyoku{}),
+	EventTypeStart.String():         reflect.TypeOf(EventStart{}),
+	EventTypeEnd.String():           reflect.TypeOf(EventEnd{}),
+	EventTypeFuriten.String():       reflect.TypeOf(EventFuriten{}),
+	EventTypeNagashiMangan.String(): reflect.TypeOf(EventNagashiMangan{}),
+	EventTypeTenhaiEnd.String():     reflect.TypeOf(EventTenhaiEnd{}),
 	// ... 添加其他事件类型
 }
 
@@ -577,7 +580,6 @@ func (event *EventChanKan) UnmarshalJSON(data []byte) error {
 type EventRyuuKyoku struct {
 	Who       Wind            `json:"who,omitempty"`
 	HandTiles Tiles           `json:"hand_tiles,omitempty"`
-	TenHai    []int           `json:"ten_hai,omitempty"`
 	Reason    RyuuKyokuReason `json:"reason,int"`
 }
 
@@ -589,12 +591,10 @@ func (event *EventRyuuKyoku) MarshalJSON() ([]byte, error) {
 	return json.Marshal(&struct {
 		Who       string `json:"who,omitempty"`
 		HandTiles []int  `json:"hand_tiles,omitempty"`
-		Tenhai    []int  `json:"ten_hai,omitempty"`
 		Reason    string `json:"reason"`
 	}{
 		Who:       event.Who.String(),
 		HandTiles: event.HandTiles,
-		Tenhai:    event.TenHai,
 		Reason:    event.Reason.String(),
 	})
 }
@@ -603,7 +603,6 @@ func (event *EventRyuuKyoku) UnmarshalJSON(data []byte) error {
 	var tmp struct {
 		Who       string `json:"who,omitempty"`
 		HandTiles []int  `json:"hand_tiles,omitempty"`
-		TenHai    []int  `json:"ten_hai,omitempty"`
 		Reason    string `json:"reason"`
 	}
 	if err := json.Unmarshal(data, &tmp); err != nil {
@@ -614,7 +613,6 @@ func (event *EventRyuuKyoku) UnmarshalJSON(data []byte) error {
 	event.Who = who
 	event.Reason = reason
 	event.HandTiles = tmp.HandTiles
-	event.TenHai = tmp.TenHai
 	return nil
 }
 
@@ -768,5 +766,42 @@ func (event *EventNagashiMangan) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	event.Who = MapStringToWind[tmp.Who]
+	return nil
+}
+
+type EventTenhaiEnd struct {
+	Who         Wind  `json:"who"`
+	HandTiles   Tiles `json:"hand_tiles"`
+	TenhaiSlice []int `json:"tenhai_slice"`
+}
+
+func (event *EventTenhaiEnd) GetType() EventType {
+	return EventTypeTenhaiEnd
+}
+
+func (event *EventTenhaiEnd) MarshalJSON() ([]byte, error) {
+	return json.Marshal(&struct {
+		Who         string `json:"who"`
+		HandTiles   []int  `json:"hand_tiles"`
+		TenhaiSlice []int  `json:"tenhai_slice"`
+	}{
+		Who:         event.Who.String(),
+		HandTiles:   event.HandTiles,
+		TenhaiSlice: event.TenhaiSlice,
+	})
+}
+
+func (event *EventTenhaiEnd) UnmarshalJSON(data []byte) error {
+	var tmp struct {
+		Who         string `json:"who"`
+		HandTiles   []int  `json:"hand_tiles"`
+		TenhaiSlice []int  `json:"tenhai_slice"`
+	}
+	if err := json.Unmarshal(data, &tmp); err != nil {
+		return err
+	}
+	event.Who = MapStringToWind[tmp.Who]
+	event.HandTiles = tmp.HandTiles
+	event.TenhaiSlice = tmp.TenhaiSlice
 	return nil
 }

@@ -260,7 +260,7 @@ func (game *Game) processChanKan(pMain *Player, call *Call) *Result {
 	if result == nil {
 		panic("chan kan result error")
 	}
-	result.RonType = ChanKan
+	result.RonCall = call
 	return result
 }
 
@@ -287,7 +287,7 @@ func (game *Game) processTsumo(pMain *Player, call *Call) *Result {
 	if result == nil {
 		panic("tsumo result is nil")
 	}
-	result.RonType = Tsumo
+	result.RonCall = call
 	return result
 }
 
@@ -303,7 +303,7 @@ func (game *Game) processRon(pMain *Player, call *Call) *Result {
 	if result == nil {
 		panic("ron result is nil")
 	}
-	result.RonType = Ron
+	result.RonCall = call
 	return result
 }
 
@@ -1082,5 +1082,75 @@ func (game *Game) processNormalRyuuKyoku(winds []Wind) {
 		game.posPlayer[wind1].Points += 1000
 		game.posPlayer[wind2].Points += 1000
 		game.posPlayer[otherWind].Points -= 3000
+	}
+}
+
+// processRonResult processes the result of ron.
+func (game *Game) processRonResult(results map[Wind]*Result) {
+	var totalPoints = 0
+	var index = 0
+	for wind, result := range results {
+		var pointsChange score.ScoreChanges
+		if index == 0 {
+			// the first player get riichi bonus
+			pointsChange = result.ScoreResult.GetChanges(base.Wind(wind), base.Wind(game.Position), score.RiichiSticks(game.NumRiichi))
+		} else {
+			pointsChange = result.ScoreResult.GetChanges(base.Wind(wind), base.Wind(game.Position), 0)
+		}
+		game.posPlayer[wind].Points += int(pointsChange.TotalWin())
+		totalPoints += int(pointsChange.TotalPayed())
+		index++
+	}
+	game.posPlayer[game.Position].Points -= totalPoints
+}
+
+func (game *Game) addRonEvents(results map[Wind]*Result) {
+	var posEvent = make(map[Wind]Event)
+	for wind, result := range results {
+		if result.RonCall.CallType == Ron {
+			for w := range game.posPlayer {
+				posEvent[w] = &EventRon{
+					Who:       wind,
+					HandTiles: game.posPlayer[wind].HandTiles,
+					WinTile:   result.RonCall.CallTiles[0],
+				}
+			}
+		} else {
+			// chan kan
+			for w := range game.posPlayer {
+				posEvent[w] = &EventChanKan{
+					Who:       wind,
+					HandTiles: game.posPlayer[wind].HandTiles,
+					WinTile:   result.RonCall.CallTiles[0],
+				}
+			}
+		}
+		game.addPosEvent(posEvent)
+		posEvent = make(map[Wind]Event)
+	}
+}
+
+func (game *Game) processTsumoResult(wind Wind, result *Result) {
+	otherWinds := []Wind{0, 1, 2, 3}
+	for i, v := range otherWinds {
+		if v == wind {
+			otherWinds = append(otherWinds[:i], otherWinds[i+1:]...)
+		}
+	}
+	pointsChange := result.ScoreResult.GetChanges(base.Wind(wind), base.Wind(wind), score.RiichiSticks(game.NumRiichi))
+	game.posPlayer[wind].Points += int(pointsChange.TotalWin())
+	if wind == East {
+		// dealer tsumo
+		for _, w := range otherWinds {
+			game.posPlayer[w].Points -= int(result.ScoreResult.PayTsumoDealer)
+		}
+	} else {
+		for _, w := range otherWinds {
+			if w == East {
+				game.posPlayer[w].Points -= int(result.ScoreResult.PayTsumoDealer)
+			} else {
+				game.posPlayer[w].Points -= int(result.ScoreResult.PayTsumo)
+			}
+		}
 	}
 }

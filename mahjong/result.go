@@ -9,7 +9,7 @@ import (
 type Result struct {
 	YakuResult      *yaku.Result
 	ScoreResult     *score.Score
-	RonType         CallType
+	RonCall         *Call
 	RyuuKyokuReason RyuuKyokuReason
 }
 

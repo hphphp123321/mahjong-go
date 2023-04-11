@@ -528,26 +528,53 @@ type EndState struct {
 }
 
 func (s *EndState) step() map[Wind]Calls {
+	var prePoints = map[Wind]int{
+		East:  s.g.posPlayer[East].Points,
+		South: s.g.posPlayer[South].Points,
+		West:  s.g.posPlayer[West].Points,
+		North: s.g.posPlayer[North].Points,
+	}
+	var pointsChanges = make(map[Wind]int)
+	var posEvent = make(map[Wind]Event)
 
-	if len(s.posResults) == 4 {
+	switch len(s.posResults) {
+	case 4:
 		// ryuu kyoku
-		var posEvent = make(map[Wind]Event)
 		if s.posResults[East].RyuuKyokuReason == RyuuKyokuNormal {
 			tenhaiWinds := s.g.judgeTenHaiWinds()
-
 			if s.g.rule.NagashiMangan {
 				// judge ryuu kyoku mangan
 				bSlice := s.g.judgeNagashiMangan()
 				if len(bSlice) != 0 {
 					s.g.processNagashiMangan(bSlice)
 					// generate nagashi mangan events
-
+					for w := range s.g.posPlayer {
+						for _, wind := range bSlice {
+							posEvent[w] = &EventNagashiMangan{
+								Who: wind,
+							}
+						}
+						s.g.addPosEvent(posEvent)
+						posEvent = make(map[Wind]Event)
+					}
 				} else {
 					s.g.processNormalRyuuKyoku(tenhaiWinds)
 				}
 			} else {
 				// process normal ryuu kyoku
 				s.g.processNormalRyuuKyoku(tenhaiWinds)
+			}
+			for w := range s.g.posPlayer {
+				for _, wind := range tenhaiWinds {
+					player := s.g.posPlayer[wind]
+					posEvent[w] = &EventTenhaiEnd{
+						Who:         wind,
+						HandTiles:   player.HandTiles,
+						TenhaiSlice: player.TenhaiSlice,
+					}
+				}
+				s.g.addPosEvent(posEvent)
+				posEvent = make(map[Wind]Event)
 			}
 
 			if !common.Contain(tenhaiWinds, East) {
@@ -560,7 +587,6 @@ func (s *EndState) step() map[Wind]Calls {
 			// process special ryuu kyoku
 			s.g.NumHonba++
 		}
-
 		for wind, result := range s.posResults {
 			posEvent[wind] = &EventRyuuKyoku{
 				Who:    wind,
@@ -568,14 +594,109 @@ func (s *EndState) step() map[Wind]Calls {
 			}
 		}
 		s.g.addPosEvent(posEvent)
-	} else if len(s.posResults) == 3 {
-		// san cha ron
-		var posEvent = make(map[Wind]Event)
-		if !s.g.rule.SanChaRon {
+		posEvent = make(map[Wind]Event)
 
+	case 3:
+		// san cha ron
+		if !s.g.rule.SanChaHou {
+			// san cha ron not allowed
+			// generate ryuu kyoku events
+			for wind := range s.g.posPlayer {
+				posEvent[wind] = &EventRyuuKyoku{
+					Who:    wind,
+					Reason: RyuuKyokuSanChaHou,
+				}
+			}
+			s.g.addPosEvent(posEvent)
+			posEvent = make(map[Wind]Event)
+
+			_, ok := s.posResults[East]
+			if !ok {
+				s.g.WindRound++
+			}
+			s.g.NumHonba++
+		} else {
+			s.g.processRonResult(s.posResults)
+			// generate san cha ron events
+			s.g.addRonEvents(s.posResults)
+
+			_, ok := s.posResults[East]
+			if ok {
+				s.g.NumHonba++
+			} else {
+				s.g.WindRound++
+			}
 		}
 
+	case 2:
+		// double ron
+		s.g.processRonResult(s.posResults)
+		// generate double ron events
+		s.g.addRonEvents(s.posResults)
+	default:
+		// normal ron, tsumo, chankan, kyushukyuhai
+		var wind Wind
+		var result *Result
+		for w, r := range s.posResults {
+			wind = w
+			result = r
+		}
+		if result.RyuuKyokuReason == RyuuKyokuKyuShuKyuHai {
+			// generate ryuu kyoku events
+			posEvent[wind] = &EventRyuuKyoku{
+				Who:       wind,
+				HandTiles: s.g.posPlayer[wind].HandTiles,
+				Reason:    RyuuKyokuKyuShuKyuHai,
+			}
+			s.g.addPosEvent(posEvent)
+			posEvent = make(map[Wind]Event)
+
+			if wind != East {
+				s.g.WindRound++
+			}
+			s.g.NumHonba++
+		} else {
+			if result.RonCall.CallType != Tsumo {
+				s.g.processRonResult(s.posResults)
+				// generate ron events
+				s.g.addRonEvents(s.posResults)
+			} else {
+				if result.RonCall.CallType != Tsumo {
+					panic("result.RonCall.CallType != Tsumo")
+				}
+				s.g.processTsumoResult(wind, result)
+				// generate tsumo events
+				for w := range s.g.posPlayer {
+					posEvent[w] = &EventTsumo{
+						Who:       wind,
+						HandTiles: s.g.posPlayer[wind].HandTiles,
+						WinTile:   result.RonCall.CallTiles[0],
+					}
+				}
+				s.g.addPosEvent(posEvent)
+				posEvent = make(map[Wind]Event)
+
+				if wind == East {
+					s.g.NumHonba++
+				} else {
+					s.g.WindRound++
+				}
+			}
+		}
 	}
+
+	// calculate scores changes
+	for wind, points := range prePoints {
+		pointsChanges[wind] = s.g.posPlayer[wind].Points - points
+	}
+
+	// generate end events
+	for w := range s.g.posPlayer {
+		posEvent[w] = &EventEnd{
+			PointsChange: pointsChanges,
+		}
+	}
+	s.g.addPosEvent(posEvent)
 
 	if s.g.CheckGameEnd() {
 		return make(map[Wind]Calls)
@@ -589,6 +710,12 @@ func (s *EndState) step() map[Wind]Calls {
 }
 
 func (s *EndState) next(posCalls map[Wind]*Call) error {
+	if len(posCalls) == 0 {
+		return errors.New("game is end")
+	}
+	s.g.State = &InitState{
+		g: s.g,
+	}
 	return nil
 }
 

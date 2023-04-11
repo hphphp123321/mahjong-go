@@ -2,6 +2,7 @@ package tests
 
 import (
 	"fmt"
+	"github.com/dnovikoff/tempai-core/base"
 	"github.com/dnovikoff/tempai-core/compact"
 	"github.com/dnovikoff/tempai-core/hand/calc"
 	"github.com/dnovikoff/tempai-core/hand/tempai"
@@ -44,7 +45,10 @@ func TestTenhai(t *testing.T) {
 
 	yakuResult := yaku.Win(results, ctx, nil)
 
-	scoreResult := score.GetScoreByResult(score.RulesTenhou(), yakuResult, 0)
+	scoreResult := score.GetScoreByResult(score.RulesTenhou(), yakuResult, 2)
+	scoreChanges := scoreResult.GetChanges(base.WindEast, base.WindEast, 1)
+	fmt.Println(scoreChanges.TotalWin())
+	fmt.Println(scoreChanges.TotalPayed())
 	fmt.Println(scoreResult.PayRon, scoreResult.PayTsumo, scoreResult.PayRonDealer, scoreResult.PayTsumoDealer, scoreResult.Special)
 
 	fmt.Println(yakuResult.Yakumans.String())
