@@ -46,6 +46,16 @@ func (call *Call) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+func (call *Call) Copy() *Call {
+	tilesFromWho := make([]Wind, len(call.CallTilesFromWho))
+	copy(tilesFromWho, call.CallTilesFromWho)
+	return &Call{
+		CallType:         call.CallType,
+		CallTiles:        call.CallTiles.Copy(),
+		CallTilesFromWho: tilesFromWho,
+	}
+}
+
 func NewCall(meldType CallType, CallTiles Tiles, CallTilesFromWho []Wind) *Call {
 	return &Call{
 		CallType:         meldType,

@@ -1,5 +1,7 @@
 package mahjong
 
+import "errors"
+
 type Wind int
 
 //go:generate stringer -type=Wind
@@ -149,3 +151,5 @@ var MapStringToFuritenReason = func() map[string]FuritenReason {
 	}
 	return m
 }()
+
+var ErrGameEnd = errors.New("game is end")

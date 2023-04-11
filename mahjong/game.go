@@ -47,7 +47,27 @@ func NewMahjongGame(playerSlice []*Player, seed int64, rule *Rule) *Game {
 	} else {
 		game.rule = rule
 	}
+	game.Reset(playerSlice)
 	return &game
+}
+
+func (game *Game) Step() map[Wind]Calls {
+	return game.State.step()
+}
+
+func (game *Game) Next(posCalls map[Wind]*Call) bool {
+	if err := game.State.next(posCalls); err != nil {
+		if err == ErrGameEnd {
+			return false
+		} else {
+			panic(err)
+		}
+	}
+	return true
+}
+
+func (game *Game) GetPosEvents(pos Wind, startIndex int) Events {
+	return game.posEvents[pos][startIndex:]
 }
 
 func (game *Game) addPosEvent(posEvent map[Wind]Event) {
@@ -78,6 +98,7 @@ func (game *Game) Reset(playerSlice []*Player) {
 	game.NumRiichi = 0
 	game.NumHonba = 0
 	game.Position = South
+	game.State = &InitState{g: game}
 	game.posEvents = map[Wind]Events{}
 
 	game.P0 = playerSlice[0]
@@ -247,6 +268,10 @@ func (game *Game) JudgeOtherCalls(pMain *Player, tileID int) Calls {
 	validCalls = append(validCalls, daiMinKan...)
 	validCalls = append(validCalls, pon...)
 	validCalls = append(validCalls, chi...)
+	if len(validCalls) == 1 {
+		// only skip call
+		return make(Calls, 0)
+	}
 	return validCalls
 }
 
@@ -519,7 +544,7 @@ func (game *Game) judgeRiichi(pMain *Player) Calls {
 func (game *Game) judgeChi(pMain *Player, tileID int) Calls {
 	discardWind := game.Tiles.allTiles[tileID].discardWind
 	chiClass := tileID / 4
-	if pMain.IsRiichi || (pMain.Wind-discardWind+4)%4 != 1 || chiClass > 27 || game.Tiles.allTiles[tileID].isLast {
+	if pMain.IsRiichi || (pMain.Wind-discardWind+4)%4 != 1 || chiClass >= 27 || game.Tiles.allTiles[tileID].isLast {
 		return make(Calls, 0)
 	}
 	handTilesClass := Tiles(pMain.GetHandTilesClass())
@@ -774,12 +799,11 @@ func (game *Game) judgeShouMinKan(pMain *Player) Calls {
 		ponClass := call.CallTiles[0] / 4
 		for _, tileID := range pMain.HandTiles {
 			if tileID/4 == ponClass && game.Tiles.allTiles[tileID].discardable {
-				posCall := Call{
-					CallType:         ShouMinKan,
-					CallTiles:        append(call.CallTiles[:3], tileID),
-					CallTilesFromWho: append(call.CallTilesFromWho[:3], pMain.Wind),
-				}
-				posCalls = append(posCalls, &posCall)
+				c := call.Copy()
+				c.CallType = ShouMinKan
+				c.CallTiles = append(c.CallTiles[:3], tileID)
+				c.CallTilesFromWho = append(c.CallTilesFromWho[:3], pMain.Wind)
+				posCalls = append(posCalls, c)
 			}
 		}
 	}
@@ -1038,7 +1062,7 @@ func (game *Game) processNagashiMangan(winds []Wind) {
 
 // judgeTenHaiWinds returns the winds of players who have ten hai in the ryuukyoku situation.
 func (game *Game) judgeTenHaiWinds() []Wind {
-	var retSlice []Wind
+	var retSlice = make([]Wind, 0, 4)
 	for wind, player := range game.posPlayer {
 		if len(player.TenhaiSlice) > 0 {
 			retSlice = append(retSlice, wind)
@@ -1048,6 +1072,10 @@ func (game *Game) judgeTenHaiWinds() []Wind {
 }
 
 func (game *Game) processNormalRyuuKyoku(winds []Wind) {
+	if len(winds) == 0 {
+		// no player tenhai
+		return
+	}
 	otherWinds := []Wind{0, 1, 2, 3}
 	for _, wind := range winds {
 		for i, v := range otherWinds {

@@ -2,7 +2,9 @@ package mahjong
 
 import (
 	"errors"
+	"fmt"
 	"github.com/hphphp123321/mahjong-go/common"
+	"sort"
 )
 
 type gameState interface {
@@ -16,13 +18,6 @@ type InitState struct {
 }
 
 func (s *InitState) step() map[Wind]Calls {
-	var validCalls = make(map[Wind]Calls)
-	for wind := range s.g.posPlayer {
-		validCalls[wind] = Calls{
-			NewCall(Next, nil, nil),
-		}
-	}
-	s.g.WindRound += 1
 	s.g.NewGameRound()
 
 	initTiles := s.g.Tiles.Setup()
@@ -31,6 +26,7 @@ func (s *InitState) step() map[Wind]Calls {
 	var posEvent = make(map[Wind]Event)
 	for wind, player := range s.g.posPlayer {
 		player.HandTiles = initTiles[wind]
+		sort.Ints(player.HandTiles)
 		player.Wind = wind
 		posEvent[wind] = &EventStart{
 			WindRound: s.g.WindRound,
@@ -43,16 +39,11 @@ func (s *InitState) step() map[Wind]Calls {
 		}
 	}
 	s.g.addPosEvent(posEvent)
-	return validCalls
+	return make(map[Wind]Calls)
 }
 
 func (s *InitState) next(posCalls map[Wind]*Call) error {
-	for _, call := range posCalls {
-		if call.CallType != Next {
-			return errors.New("invalid call")
-		}
-	}
-	if len(posCalls) != 4 {
+	if len(posCalls) != 0 {
 		return errors.New("invalid call nums")
 	}
 	s.g.State = &DealState{
@@ -86,6 +77,15 @@ func (s *DealState) step() map[Wind]Calls {
 			}
 		}
 		s.g.addPosEvent(posEvent)
+	}
+
+	for wind, player := range s.g.posPlayer {
+		if wind == s.g.Position {
+			continue
+		}
+		if common.Contain(tile, player.HandTiles) {
+			fmt.Println("discard tile in hand")
+		}
 	}
 
 	pMain := s.g.posPlayer[s.g.Position]
@@ -266,7 +266,7 @@ func (s *DiscardState) next(posCalls map[Wind]*Call) error {
 
 	pMain := s.g.posPlayer[s.g.Position]
 	// if there is no call after discard, then next player deal
-	if posCalls == nil {
+	if len(posCalls) == 0 {
 		if s.g.judgeSuuChaRiichi() {
 			// if suu cha riichi
 			s.g.State = &EndState{
@@ -341,42 +341,58 @@ func (s *DiscardState) next(posCalls map[Wind]*Call) error {
 			return nil
 		}
 
-		for wind, call := range posCalls {
-			player := s.g.posPlayer[wind]
-			if call.CallType != maxCallType {
-				continue
-			}
-			if pMain.RiichiStep == 1 {
-				var posEvent map[Wind]Event
-				s.g.processRiichiStep2(pMain)
-				// generate riichi step 2 event
-				posEvent = make(map[Wind]Event)
-				for wind := range s.g.posPlayer {
-					posEvent[wind] = &EventRiichi{
-						Who:  pMain.Wind,
-						Step: 2,
-					}
-				}
-				s.g.addPosEvent(posEvent)
-			}
-			switch call.CallType {
-			case Chi, Pon:
-				s.g.processChi(player, call)
-				s.g.State = &ChiPonState{
-					g:    s.g,
-					call: call,
-				}
-			case DaiMinKan:
-				s.g.processDaiMinKan(player, call)
-				s.g.State = &KanState{
-					g:    s.g,
-					call: call,
-				}
-			default:
-				return errors.New("unknown call type")
+		var wind Wind
+		var call *Call
+		for w, c := range posCalls {
+			if c.CallType == maxCallType {
+				wind = w
+				call = c
+				break
 			}
 		}
+		player := s.g.posPlayer[wind]
+		s.g.Position = wind
+		if pMain.RiichiStep == 1 {
+			var posEvent map[Wind]Event
+			s.g.processRiichiStep2(pMain)
+			// generate riichi step 2 event
+			posEvent = make(map[Wind]Event)
+			for w := range s.g.posPlayer {
+				posEvent[w] = &EventRiichi{
+					Who:  pMain.Wind,
+					Step: 2,
+				}
+			}
+			s.g.addPosEvent(posEvent)
+		}
+		switch call.CallType {
+		case Chi, Pon:
+			if call.CallType == Chi {
+				s.g.processChi(player, call)
+			} else {
+				s.g.processPon(player, call)
+			}
+			s.g.State = &ChiPonState{
+				g:    s.g,
+				call: call,
+			}
+		case DaiMinKan:
+			s.g.processDaiMinKan(player, call)
+			s.g.State = &KanState{
+				g:    s.g,
+				call: call,
+			}
+		case Skip:
+			s.g.Position = (s.g.Position + 1) % 4
+			s.g.State = &DealState{
+				g:           s.g,
+				dealRinshan: false,
+			}
+		default:
+			return errors.New("unknown call type")
+		}
 	}
+
 	return nil
 }
 
@@ -711,7 +727,7 @@ func (s *EndState) step() map[Wind]Calls {
 
 func (s *EndState) next(posCalls map[Wind]*Call) error {
 	if len(posCalls) == 0 {
-		return errors.New("game is end")
+		return ErrGameEnd
 	}
 	s.g.State = &InitState{
 		g: s.g,

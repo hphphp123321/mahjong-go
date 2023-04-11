@@ -5,36 +5,37 @@ import (
 	"github.com/dnovikoff/tempai-core/compact"
 	"github.com/dnovikoff/tempai-core/hand/calc"
 	"github.com/dnovikoff/tempai-core/hand/shanten"
-	"github.com/dnovikoff/tempai-core/hand/tempai"
 	"github.com/dnovikoff/tempai-core/tile"
 	"github.com/hphphp123321/mahjong-go/mahjong"
 	"testing"
 )
 
+// 1, 4, 5, 11, 17, 22, 28, 30, 32, 34  	27
 func TestShanten(t *testing.T) {
 	generator := compact.NewTileGenerator()
 	a := compact.NewInstances()
-	handTiles := tile.Tiles{5, 6, 14, 15, 17, 17, 33, 33, 4, 16}
+	handTiles := tile.Tiles{11, 12, 13, 28, 28, 28, 24, 24, 24, 27}
 	hand := generator.Tiles(handTiles)
 	a.Add(hand)
 
-	declared := []calc.Meld{calc.Kan(tile.Tile(21))}
+	declared := []calc.Meld{calc.Open(calc.Chi(tile.Tile(2)))}
 	melds := calc.Melds{}
 	melds = append(melds, declared...)
 	cal := calc.Declared(melds)
 
 	res := shanten.Calculate(a, cal)
 
-	results := tempai.Calculate(a, cal)
+	//results := tempai.Calculate(a, cal)
 
 	fmt.Printf("Total shanten value is: %v\n", res.Total.Value)
-	fmt.Printf("Waits are %s\n", tempai.GetWaits(results).Tiles())
 
-	var tenhaiSlice []int
-	tiles := tempai.GetWaits(results).Tiles()
-	for _, tileID := range tiles {
-		tenhaiSlice = append(tenhaiSlice, int(tileID))
-	}
+	//fmt.Printf("Waits are %s\n", tempai.GetWaits(results).Tiles())
+
+	//var tenhaiSlice []int
+	//tiles := tempai.GetWaits(results).Tiles()
+	//for _, tileID := range tiles {
+	//	tenhaiSlice = append(tenhaiSlice, int(tileID))
+	//}
 }
 
 func TestCalculate(t *testing.T) {
