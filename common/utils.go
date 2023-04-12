@@ -3,7 +3,19 @@ package common
 import (
 	"errors"
 	"reflect"
+	"sort"
 )
+
+func SortMapByKey[K ~int, V any](m map[K]V) []K {
+	keys := make([]K, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Slice(keys, func(i, j int) bool {
+		return keys[i] < keys[j]
+	})
+	return keys
+}
 
 func Max[T Comparable](o []T) T {
 	if len(o) == 0 {
@@ -73,6 +85,7 @@ func MinNum[T Num](ns []T) T {
 	return ns[minIndex]
 }
 
+// Contain checks if the target(slice array map) contains the obj.
 func Contain(obj interface{}, target interface{}) bool {
 	targetValue := reflect.ValueOf(target)
 	switch reflect.TypeOf(target).Kind() {
@@ -89,6 +102,38 @@ func Contain(obj interface{}, target interface{}) bool {
 	}
 
 	return false
+}
+
+// RemoveIndex removes the element at the given index from the slice.
+// Return the new slice and the removed element count.
+func RemoveIndex[T comparable](obj []T, indices ...int) []T {
+	objT := make([]T, 0, len(obj)-len(indices))
+	mapI := map[int]struct{}{}
+	for _, i := range indices {
+		mapI[i] = struct{}{}
+	}
+	for i := 0; i < len(obj); i++ {
+		if _, ok := mapI[i]; !ok {
+			objT = append(objT, obj[i])
+		}
+	}
+	return objT
+}
+
+func RemoveSafe[T comparable](obj []T, target T) ([]T, bool) {
+	objT := make([]T, len(obj))
+	i := 0
+	for ; i < len(obj); i++ {
+		if obj[i] == target {
+			break
+		}
+	}
+	if i == len(obj) {
+		return obj, false
+	}
+	copy(objT, obj[:i])
+	copy(objT[i:], obj[i+1:])
+	return objT, true
 }
 
 func Remove(obj interface{}, target interface{}) (interface{}, error) {

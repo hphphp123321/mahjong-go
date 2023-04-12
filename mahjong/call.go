@@ -82,3 +82,9 @@ func (calls *Calls) Index(call *Call) int {
 	}
 	panic("call not in calls!")
 }
+
+func (calls *Calls) Copy() Calls {
+	callsCopy := make(Calls, len(*calls), cap(*calls))
+	copy(callsCopy, *calls)
+	return callsCopy
+}

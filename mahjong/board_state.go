@@ -1,14 +1,13 @@
 package mahjong
 
 type BoardState struct {
-	RoundWind      int   `json:"round_wind"`
-	NumHonba       int   `json:"num_honba"`
-	NumRiichi      int   `json:"num_riichi"`
-	DoraIndicators Tiles `json:"dora_indicators"`
-	PlayerWind     int   `json:"player_wind"`
-	Position       int   `json:"position"`
-	HandTiles      Tiles `json:"hand_tiles"`
-	//RealAction     Call        `json:"real_action"`
+	RoundWind      int         `json:"round_wind"`
+	NumHonba       int         `json:"num_honba"`
+	NumRiichi      int         `json:"num_riichi"`
+	DoraIndicators Tiles       `json:"dora_indicators"`
+	PlayerWind     int         `json:"player_wind"`
+	Position       int         `json:"position"`
+	HandTiles      Tiles       `json:"hand_tiles"`
 	ValidActions   Calls       `json:"valid_actions"`
 	RealActionIdx  int         `json:"action_idx"`
 	NumRemainTiles int         `json:"remain_tiles"`
@@ -37,7 +36,6 @@ func NewBoardState() *BoardState {
 		PlayerWind:     -1,
 		Position:       -1,
 		HandTiles:      nil,
-		//RealAction:     Call{},
 		ValidActions:   nil,
 		RealActionIdx:  -1,
 		NumRemainTiles: -1,

@@ -36,7 +36,7 @@ func TestJson(t *testing.T) {
 	e5 := mahjong.EventRyuuKyoku{
 		Who: mahjong.South,
 		//HandTiles: mahjong.Tiles{12, 58},
-		Reason: mahjong.RyuuKyokuKyuShuKyuHai,
+		Reason: mahjong.RyuuKyokuKyuuShuKyuuHai,
 	}
 	e6 := mahjong.EventEnd{
 		PointsChange: map[mahjong.Wind]int{

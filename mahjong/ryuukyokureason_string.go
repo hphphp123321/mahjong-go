@@ -10,16 +10,16 @@ func _() {
 	var x [1]struct{}
 	_ = x[NoRyuuKyoku-0]
 	_ = x[RyuuKyokuNormal-1]
-	_ = x[RyuuKyokuKyuShuKyuHai-2]
+	_ = x[RyuuKyokuKyuuShuKyuuHai-2]
 	_ = x[RyuuKyokuSuuChaRiichi-3]
 	_ = x[RyuuKyokuSuuKaiKan-4]
 	_ = x[RyuuKyokuSuufonRenda-5]
 	_ = x[RyuuKyokuSanChaHou-6]
 }
 
-const _RyuuKyokuReason_name = "NoRyuuKyokuRyuuKyokuNormalRyuuKyokuKyuShuKyuHaiRyuuKyokuSuuChaRiichiRyuuKyokuSuuKaiKanRyuuKyokuSuufonRendaRyuuKyokuSanChaHou"
+const _RyuuKyokuReason_name = "NoRyuuKyokuRyuuKyokuNormalRyuuKyokuKyuuShuKyuuHaiRyuuKyokuSuuChaRiichiRyuuKyokuSuuKaiKanRyuuKyokuSuufonRendaRyuuKyokuSanChaHou"
 
-var _RyuuKyokuReason_index = [...]uint8{0, 11, 26, 47, 68, 86, 106, 124}
+var _RyuuKyokuReason_index = [...]uint8{0, 11, 26, 49, 70, 88, 108, 126}
 
 func (i RyuuKyokuReason) String() string {
 	if i < 0 || i >= RyuuKyokuReason(len(_RyuuKyokuReason_index)-1) {

@@ -2,7 +2,6 @@ package mahjong
 
 import (
 	"errors"
-	"fmt"
 	"github.com/hphphp123321/mahjong-go/common"
 	"sort"
 )
@@ -79,15 +78,6 @@ func (s *DealState) step() map[Wind]Calls {
 		s.g.addPosEvent(posEvent)
 	}
 
-	for wind, player := range s.g.posPlayer {
-		if wind == s.g.Position {
-			continue
-		}
-		if common.Contain(tile, player.HandTiles) {
-			fmt.Println("discard tile in hand")
-		}
-	}
-
 	pMain := s.g.posPlayer[s.g.Position]
 	s.g.GetTileProcess(pMain, tile)
 	validActions := s.g.JudgeSelfCalls(pMain)
@@ -106,6 +96,9 @@ func (s *DealState) step() map[Wind]Calls {
 	}
 	s.g.addPosEvent(posEvent)
 
+	if len(validActions) == 0 {
+		panic("no valid action")
+	}
 	return map[Wind]Calls{
 		pMain.Wind: validActions,
 	}
@@ -182,11 +175,11 @@ func (s *DealState) next(posCalls map[Wind]*Call) error {
 			g:          s.g,
 			posResults: map[Wind]*Result{pMain.Wind: result},
 		}
-	case KyuShuKyuHai:
-		s.g.processKyuShuKyuHai()
+	case KyuuShuKyuuHai:
+		s.g.processKyuuShuKyuuHai()
 		s.g.State = &EndState{
 			g:          s.g,
-			posResults: map[Wind]*Result{pMain.Wind: {RyuuKyokuReason: RyuuKyokuKyuShuKyuHai}},
+			posResults: map[Wind]*Result{pMain.Wind: {RyuuKyokuReason: RyuuKyokuKyuuShuKyuuHai}},
 		}
 	default:
 		return errors.New("unknown call type")
@@ -195,7 +188,7 @@ func (s *DealState) next(posCalls map[Wind]*Call) error {
 }
 
 func (s *DealState) String() string {
-	return "Deal"
+	return "After Deal"
 }
 
 type DiscardState struct {
@@ -242,6 +235,9 @@ func (s *DiscardState) next(posCalls map[Wind]*Call) error {
 	for _, wind := range s.g.getOtherWinds() {
 		player := s.g.posPlayer[wind]
 		if !player.FuritenStatus {
+			continue
+		}
+		if _, ok := posCalls[wind]; !ok {
 			continue
 		}
 		if posCalls[wind].CallType == Ron {
@@ -397,7 +393,7 @@ func (s *DiscardState) next(posCalls map[Wind]*Call) error {
 }
 
 func (s *DiscardState) String() string {
-	return "Discard"
+	return "After Discard"
 }
 
 type ChiPonState struct {
@@ -535,7 +531,7 @@ func (s *KanState) next(posCalls map[Wind]*Call) error {
 }
 
 func (s *KanState) String() string {
-	return "Call"
+	return "After Kan"
 }
 
 type EndState struct {
@@ -657,12 +653,12 @@ func (s *EndState) step() map[Wind]Calls {
 			wind = w
 			result = r
 		}
-		if result.RyuuKyokuReason == RyuuKyokuKyuShuKyuHai {
+		if result.RyuuKyokuReason == RyuuKyokuKyuuShuKyuuHai {
 			// generate ryuu kyoku events
 			posEvent[wind] = &EventRyuuKyoku{
 				Who:       wind,
 				HandTiles: s.g.posPlayer[wind].HandTiles,
-				Reason:    RyuuKyokuKyuShuKyuHai,
+				Reason:    RyuuKyokuKyuuShuKyuuHai,
 			}
 			s.g.addPosEvent(posEvent)
 			posEvent = make(map[Wind]Event)

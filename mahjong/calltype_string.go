@@ -19,14 +19,14 @@ func _() {
 	_ = x[Riichi-7]
 	_ = x[Ron-8]
 	_ = x[Tsumo-9]
-	_ = x[KyuShuKyuHai-10]
+	_ = x[KyuuShuKyuuHai-10]
 	_ = x[ChanKan-11]
 	_ = x[Next-12]
 }
 
-const _CallType_name = "GetSkipDiscardChiPonDaiMinKanShouMinKanAnKanRiichiRonTsumoKyuShuKyuHaiChanKanNext"
+const _CallType_name = "GetSkipDiscardChiPonDaiMinKanShouMinKanAnKanRiichiRonTsumoKyuuShuKyuuHaiChanKanNext"
 
-var _CallType_index = [...]uint8{0, 3, 7, 14, 17, 20, 29, 39, 44, 50, 53, 58, 70, 77, 81}
+var _CallType_index = [...]uint8{0, 3, 7, 14, 17, 20, 29, 39, 44, 50, 53, 58, 72, 79, 83}
 
 func (i CallType) String() string {
 	i -= -1

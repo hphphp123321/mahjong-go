@@ -1,6 +1,7 @@
 package mahjong
 
 import (
+	"fmt"
 	"github.com/dnovikoff/tempai-core/base"
 	"github.com/dnovikoff/tempai-core/score"
 	"github.com/dnovikoff/tempai-core/yaku"
@@ -38,8 +39,9 @@ type Game struct {
 func NewMahjongGame(playerSlice []*Player, seed int64, rule *Rule) *Game {
 	randP := rand.New(rand.NewSource(seed))
 	game := Game{
-		Tiles: NewMahjongTiles(randP),
-		seed:  seed,
+		Tiles:     NewMahjongTiles(randP),
+		WindRound: WindRoundDummy,
+		seed:      seed,
 	}
 	game.Reset(playerSlice)
 	if rule == nil {
@@ -47,7 +49,6 @@ func NewMahjongGame(playerSlice []*Player, seed int64, rule *Rule) *Game {
 	} else {
 		game.rule = rule
 	}
-	game.Reset(playerSlice)
 	return &game
 }
 
@@ -79,7 +80,7 @@ func (game *Game) addPosEvent(posEvent map[Wind]Event) {
 func (game *Game) NewGameRound() {
 	game.NumGame += 1
 	game.Tiles.Reset()
-	game.Position = 0
+	game.Position = East
 	game.posEvents = map[Wind]Events{}
 	game.posPlayer[Wind((16-game.WindRound)%4)] = game.P0
 	game.posPlayer[Wind((17-game.WindRound)%4)] = game.P1
@@ -94,10 +95,10 @@ func (game *Game) NewGameRound() {
 func (game *Game) Reset(playerSlice []*Player) {
 	game.Tiles.Reset()
 	game.NumGame = -1
-	game.WindRound = WindRoundDummy
+	game.WindRound = WindRoundEast1
 	game.NumRiichi = 0
 	game.NumHonba = 0
-	game.Position = South
+	game.Position = East
 	game.State = &InitState{g: game}
 	game.posEvents = map[Wind]Events{}
 
@@ -172,7 +173,7 @@ func (game *Game) GetTileProcess(pMain *Player, tileID int) {
 	pMain.JunFuriten = false
 }
 
-// DealTile TODO deal tile
+// DealTile deal a tile
 func (game *Game) DealTile(dealRinshan bool) int {
 	return game.Tiles.DealTile(dealRinshan)
 }
@@ -238,11 +239,14 @@ func (game *Game) JudgeDiscardCall(pMain *Player) Calls {
 		}
 		validCalls = append(validCalls, &call)
 	}
+	if len(validCalls) == 0 {
+		panic("no valid action")
+	}
 	return validCalls
 }
 
 func (game *Game) JudgeSelfCalls(pMain *Player) Calls {
-	var validCalls Calls
+	var validCalls = make(Calls, 0)
 	tsumo := game.judgeTsumo(pMain)
 	riichi := game.judgeRiichi(pMain)
 	shouMinKan := game.judgeShouMinKan(pMain)
@@ -253,6 +257,9 @@ func (game *Game) JudgeSelfCalls(pMain *Player) Calls {
 	validCalls = append(validCalls, shouMinKan...)
 	validCalls = append(validCalls, anKan...)
 	validCalls = append(validCalls, discard...)
+	if len(validCalls) == 0 {
+		panic("no valid action")
+	}
 	return validCalls
 }
 
@@ -265,9 +272,11 @@ func (game *Game) JudgeOtherCalls(pMain *Player, tileID int) Calls {
 	daiMinKan := game.judgeDaiMinKan(pMain, tileID)
 	pon := game.judgePon(pMain, tileID)
 	chi := game.judgeChi(pMain, tileID)
+	ron := game.judgeRon(pMain, tileID)
 	validCalls = append(validCalls, daiMinKan...)
 	validCalls = append(validCalls, pon...)
 	validCalls = append(validCalls, chi...)
+	validCalls = append(validCalls, ron...)
 	if len(validCalls) == 1 {
 		// only skip call
 		return make(Calls, 0)
@@ -435,9 +444,9 @@ func (game *Game) processShouMinKan(pMain *Player, call *Call) {
 	panic("ShouMinKan not success!")
 }
 
-func (game *Game) processKyuShuKyuHai() *Result {
+func (game *Game) processKyuuShuKyuuHai() *Result {
 	return &Result{
-		RyuuKyokuReason: RyuuKyokuKyuShuKyuHai,
+		RyuuKyokuReason: RyuuKyokuKyuuShuKyuuHai,
 	}
 }
 
@@ -456,7 +465,7 @@ func (game *Game) judgeRon(pMain *Player, tileID int) Calls {
 	return Calls{&Call{
 		CallType:         Ron,
 		CallTiles:        Tiles{tileID, -1, -1, -1},
-		CallTilesFromWho: []Wind{game.Tiles.allTiles[tileID].discardWind, Dummy, Dummy, Dummy},
+		CallTilesFromWho: []Wind{game.Tiles.allTiles[tileID].discardWind, WindDummy, WindDummy, WindDummy},
 	}}
 }
 
@@ -479,7 +488,7 @@ func (game *Game) judgeChanKan(pMain *Player, tileID int, isAnKan bool) Calls {
 	return Calls{&Call{
 		CallType:         ChanKan,
 		CallTiles:        Tiles{tileID, -1, -1, -1},
-		CallTilesFromWho: []Wind{Dummy, Dummy, Dummy, Dummy},
+		CallTilesFromWho: []Wind{WindDummy, WindDummy, WindDummy, WindDummy},
 	}}
 }
 
@@ -514,7 +523,7 @@ func (game *Game) judgeTsumo(pMain *Player) Calls {
 	return Calls{&Call{
 		CallType:         Tsumo,
 		CallTiles:        Tiles{winTile, -1, -1, -1},
-		CallTilesFromWho: []Wind{pMain.Wind, Dummy, Dummy, Dummy},
+		CallTilesFromWho: []Wind{pMain.Wind, WindDummy, WindDummy, WindDummy},
 	}}
 }
 
@@ -535,7 +544,7 @@ func (game *Game) judgeRiichi(pMain *Player) Calls {
 		riichiCalls = append(riichiCalls, &Call{
 			CallType:         Riichi,
 			CallTiles:        Tiles{tileID, -1, -1, -1},
-			CallTilesFromWho: []Wind{pMain.Wind, Dummy, Dummy, Dummy},
+			CallTilesFromWho: []Wind{pMain.Wind, WindDummy, WindDummy, WindDummy},
 		})
 	}
 	return riichiCalls
@@ -584,7 +593,7 @@ func (game *Game) judgeChi(pMain *Player, tileID int) Calls {
 		posCall := Call{
 			CallType:         Chi,
 			CallTiles:        Tiles{tile1ID, tile2ID, tileID, -1},
-			CallTilesFromWho: []Wind{pMain.Wind, pMain.Wind, discardWind, Dummy},
+			CallTilesFromWho: []Wind{pMain.Wind, pMain.Wind, discardWind, WindDummy},
 		}
 		posCalls = append(posCalls, &posCall)
 		if common.Contain(tile1ID, []int{16, 52, 88}) {
@@ -594,7 +603,7 @@ func (game *Game) judgeChi(pMain *Player, tileID int) Calls {
 				posCall = Call{
 					CallType:         Chi,
 					CallTiles:        Tiles{tile1ID, tile2ID, tileID, -1},
-					CallTilesFromWho: []Wind{pMain.Wind, pMain.Wind, discardWind, Dummy},
+					CallTilesFromWho: []Wind{pMain.Wind, pMain.Wind, discardWind, WindDummy},
 				}
 				posCalls = append(posCalls, &posCall)
 			}
@@ -605,7 +614,7 @@ func (game *Game) judgeChi(pMain *Player, tileID int) Calls {
 				posCall = Call{
 					CallType:         Chi,
 					CallTiles:        Tiles{tile1ID, tile2ID, tileID, -1},
-					CallTilesFromWho: []Wind{pMain.Wind, pMain.Wind, discardWind, Dummy},
+					CallTilesFromWho: []Wind{pMain.Wind, pMain.Wind, discardWind, WindDummy},
 				}
 				posCalls = append(posCalls, &posCall)
 			}
@@ -620,8 +629,7 @@ func (game *Game) judgeChi(pMain *Player, tileID int) Calls {
 		tile1ID := call.CallTiles[0]
 		tile2ID := call.CallTiles[1]
 		tile3ID := call.CallTiles[2]
-		handTilesCopy := make(Tiles, len(pMain.HandTiles), len(pMain.HandTiles))
-		copy(handTilesCopy, pMain.HandTiles)
+		handTilesCopy := pMain.HandTiles.Copy()
 		handTilesCopy = handTilesCopy.Remove(tile1ID)
 		handTilesCopy = handTilesCopy.Remove(tile2ID)
 		tileClass := tile3ID / 4
@@ -638,18 +646,18 @@ func (game *Game) judgeChi(pMain *Player, tileID int) Calls {
 		}
 		posClass = append(posClass, tileClass)
 		flag := true
-		for _, handTilesID := range pMain.HandTiles {
+		for _, handTilesID := range handTilesCopy {
 			if !common.Contain(handTilesID/4, posClass) {
 				flag = false
+				break
 			}
 		}
 		if flag {
 			delIdxSlice = append(delIdxSlice, i)
 		}
 	}
-	for idx := len(delIdxSlice) - 1; idx >= 0; idx-- {
-		delIdx := delIdxSlice[idx]
-		posCalls = append(posCalls[:delIdx], posCalls[delIdx+1:]...)
+	if len(delIdxSlice) > 0 {
+		posCalls = common.RemoveIndex(posCalls, delIdxSlice...)
 	}
 	return posCalls
 }
@@ -673,7 +681,7 @@ func (game *Game) judgePon(pMain *Player, tileID int) Calls {
 	posCall := Call{
 		CallType:         Pon,
 		CallTiles:        Tiles{tile1ID, tile2ID, tileID, -1},
-		CallTilesFromWho: []Wind{pMain.Wind, pMain.Wind, discardWind, Dummy},
+		CallTilesFromWho: []Wind{pMain.Wind, pMain.Wind, discardWind, WindDummy},
 	}
 	posCalls = append(posCalls, &posCall)
 	if tileCount == 3 {
@@ -686,21 +694,21 @@ func (game *Game) judgePon(pMain *Player, tileID int) Calls {
 			posCall = Call{
 				CallType:         Pon,
 				CallTiles:        Tiles{tile2ID, tile3ID, tileID, -1},
-				CallTilesFromWho: []Wind{pMain.Wind, pMain.Wind, discardWind, Dummy},
+				CallTilesFromWho: []Wind{pMain.Wind, pMain.Wind, discardWind, WindDummy},
 			}
 			posCalls = append(posCalls, &posCall)
 		} else if common.Contain(tile2ID, []int{16, 52, 88}) {
 			posCall = Call{
 				CallType:         Pon,
 				CallTiles:        Tiles{tile1ID, tile3ID, tileID, -1},
-				CallTilesFromWho: []Wind{pMain.Wind, pMain.Wind, discardWind, Dummy},
+				CallTilesFromWho: []Wind{pMain.Wind, pMain.Wind, discardWind, WindDummy},
 			}
 			posCalls = append(posCalls, &posCall)
 		} else if common.Contain(tile3ID, []int{16, 52, 88}) {
 			posCall = Call{
 				CallType:         Pon,
 				CallTiles:        Tiles{tile1ID, tile3ID, tileID, -1},
-				CallTilesFromWho: []Wind{pMain.Wind, pMain.Wind, discardWind, Dummy},
+				CallTilesFromWho: []Wind{pMain.Wind, pMain.Wind, discardWind, WindDummy},
 			}
 			posCalls = append(posCalls, &posCall)
 		}
@@ -770,11 +778,7 @@ func (game *Game) judgeAnKan(pMain *Player) Calls {
 				}
 				// if a riichi player's tenhai changed after ankan, then this ankan is not valid
 				tenhaiSlice := pMain.TenhaiSlice
-				tmpHandTiles := pMain.HandTiles.Copy()
-				tmpHandTiles = append(tmpHandTiles[:a], tmpHandTiles[a+1:]...)
-				tmpHandTiles = append(tmpHandTiles[:b], tmpHandTiles[b+1:]...)
-				tmpHandTiles = append(tmpHandTiles[:c], tmpHandTiles[c+1:]...)
-				tmpHandTiles = append(tmpHandTiles[:d], tmpHandTiles[d+1:]...)
+				tmpHandTiles := common.RemoveIndex(pMain.HandTiles, a, b, c, d)
 				melds := Calls{&posCall}
 				tenhaiSliceAfterKan := GetTenhaiSlice(tmpHandTiles, melds)
 				if !common.Equal(tenhaiSlice, tenhaiSliceAfterKan) {
@@ -824,9 +828,9 @@ func (game *Game) judgeKyuShuKyuHai(pMain *Player) Calls {
 		return make(Calls, 0)
 	}
 	return Calls{&Call{
-		CallType:         KyuShuKyuHai,
+		CallType:         KyuuShuKyuuHai,
 		CallTiles:        Tiles{-1, -1, -1, -1},
-		CallTilesFromWho: []Wind{Dummy, Dummy, Dummy, Dummy},
+		CallTilesFromWho: []Wind{WindDummy, WindDummy, WindDummy, WindDummy},
 	}}
 }
 
@@ -962,7 +966,9 @@ func (game *Game) judgeNagashiMangan() []Wind {
 		panic("the number of remain tiles is not 0")
 	}
 	var retSlice []Wind
-	for wind, player := range game.posPlayer {
+	winds := common.SortMapByKey(game.posPlayer)
+	for _, wind := range winds {
+		player := game.posPlayer[wind]
 		if player.judgeNagashiMangan() {
 			retSlice = append(retSlice, wind)
 		}
@@ -979,7 +985,7 @@ func (game *Game) CheckGameEnd() bool {
 	}
 	if game.WindRound < WindRound(game.rule.GameLength) {
 		return false
-	} else if game.WindRound > WindRoundNorth4 {
+	} else if game.WindRound > WindRound(game.rule.GameLength+4) || game.WindRound > WindRoundNorth4 {
 		return true
 	} else {
 		for _, player := range game.posPlayer {
@@ -1063,11 +1069,14 @@ func (game *Game) processNagashiMangan(winds []Wind) {
 // judgeTenHaiWinds returns the winds of players who have ten hai in the ryuukyoku situation.
 func (game *Game) judgeTenHaiWinds() []Wind {
 	var retSlice = make([]Wind, 0, 4)
-	for wind, player := range game.posPlayer {
+	winds := common.SortMapByKey(game.posPlayer)
+	for _, wind := range winds {
+		player := game.posPlayer[wind]
 		if len(player.TenhaiSlice) > 0 {
 			retSlice = append(retSlice, wind)
 		}
 	}
+
 	return retSlice
 }
 
@@ -1116,10 +1125,18 @@ func (game *Game) processNormalRyuuKyoku(winds []Wind) {
 // processRonResult processes the result of ron.
 func (game *Game) processRonResult(results map[Wind]*Result) {
 	var totalPoints = 0
-	var index = 0
-	for wind, result := range results {
+	// sort results
+	var winds []Wind
+	for wind := range results {
+		winds = append(winds, wind)
+	}
+	sort.Slice(winds, func(i, j int) bool {
+		return winds[i] < winds[j]
+	})
+	for i, wind := range winds {
+		result := results[wind]
 		var pointsChange score.ScoreChanges
-		if index == 0 {
+		if i == 0 {
 			// the first player get riichi bonus
 			pointsChange = result.ScoreResult.GetChanges(base.Wind(wind), base.Wind(game.Position), score.RiichiSticks(game.NumRiichi))
 		} else {
@@ -1127,12 +1144,14 @@ func (game *Game) processRonResult(results map[Wind]*Result) {
 		}
 		game.posPlayer[wind].Points += int(pointsChange.TotalWin())
 		totalPoints += int(pointsChange.TotalPayed())
-		index++
 	}
 	game.posPlayer[game.Position].Points -= totalPoints
 }
 
 func (game *Game) addRonEvents(results map[Wind]*Result) {
+	if len(results) > 1 {
+		fmt.Println(1)
+	}
 	var posEvent = make(map[Wind]Event)
 	for wind, result := range results {
 		if result.RonCall.CallType == Ron {

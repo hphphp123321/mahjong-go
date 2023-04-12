@@ -58,7 +58,7 @@ func (player *Player) GetShantenNum() int {
 }
 
 func (player *Player) GetTenhaiSlice() []int {
-	return GetTenhaiSlice(player.TenhaiTiles, player.Melds)
+	return GetTenhaiSlice(player.HandTiles.Copy(), player.Melds.Copy())
 }
 
 func (player *Player) GetRiichiTiles() Tiles {
