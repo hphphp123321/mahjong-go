@@ -158,7 +158,7 @@ func (game *Game) Reset(playerSlice []*Player) {
 //	}
 //}
 
-func (game *Game) GetTileProcess(pMain *Player, tileID int) {
+func (game *Game) GetTileProcess(pMain *Player, tileID Tile) {
 	if pMain.IsRiichi {
 		for _, tile := range pMain.HandTiles {
 			game.Tiles.allTiles[tile].discardable = false
@@ -174,11 +174,11 @@ func (game *Game) GetTileProcess(pMain *Player, tileID int) {
 }
 
 // DealTile deal a tile
-func (game *Game) DealTile(dealRinshan bool) int {
+func (game *Game) DealTile(dealRinshan bool) Tile {
 	return game.Tiles.DealTile(dealRinshan)
 }
 
-func (game *Game) DiscardTileProcess(pMain *Player, tileID int) {
+func (game *Game) DiscardTileProcess(pMain *Player, tileID Tile) {
 	if !game.Tiles.allTiles[tileID].discardable {
 		panic("Illegal Discard ID")
 	}
@@ -187,10 +187,10 @@ func (game *Game) DiscardTileProcess(pMain *Player, tileID int) {
 	} else {
 		pMain.TilesTsumoGiri = append(pMain.TilesTsumoGiri, false)
 	}
-	pMain.HandTiles = pMain.HandTiles.Remove(tileID)
-	pMain.DiscardTiles = append(pMain.DiscardTiles, tileID)
-	pMain.BoardTiles = append(pMain.BoardTiles, tileID)
-	sort.Ints(pMain.HandTiles)
+	pMain.HandTiles.Remove(tileID)
+	pMain.DiscardTiles.Append(tileID)
+	pMain.BoardTiles.Append(tileID)
+	sort.Sort(&pMain.HandTiles)
 	pMain.IppatsuStatus = false
 	game.Tiles.allTiles[tileID].discardWind = pMain.Wind
 	pMain.ShantenNum = pMain.GetShantenNum()
@@ -263,7 +263,7 @@ func (game *Game) JudgeSelfCalls(pMain *Player) Calls {
 	return validCalls
 }
 
-func (game *Game) JudgeOtherCalls(pMain *Player, tileID int) Calls {
+func (game *Game) JudgeOtherCalls(pMain *Player, tileID Tile) Calls {
 	validCalls := Calls{&Call{
 		CallType:         Skip,
 		CallTiles:        Tiles{-1, -1, -1, -1},
@@ -359,29 +359,30 @@ func (game *Game) processRiichiStep2(pMain *Player) {
 }
 
 func (game *Game) processChi(pMain *Player, call *Call) {
-	pMain.HandTiles = pMain.HandTiles.Remove(call.CallTiles[0])
-	pMain.HandTiles = pMain.HandTiles.Remove(call.CallTiles[1])
+	pMain.HandTiles.Remove(call.CallTiles[0])
+	pMain.HandTiles.Remove(call.CallTiles[1])
 	tileID := call.CallTiles[2]
 	subWind := call.CallTilesFromWho[2]
-	game.posPlayer[subWind].BoardTiles = game.posPlayer[subWind].BoardTiles.Remove(tileID)
+	game.posPlayer[subWind].BoardTiles.Remove(tileID)
 	pMain.Melds = append(pMain.Melds, call)
 
 	// 食替
-	tileClass := tileID / 4
-	tile1Class := call.CallTiles[0] / 4
-	tile2Class := call.CallTiles[1] / 4
-	posClass := make(Tiles, 0, 4)
+	tileClass := tileID.Class()
+	tile1Class := call.CallTiles[0].Class()
+	tile2Class := call.CallTiles[1].Class()
+	posClass := make(TileClasses, 0, 4)
 	if tile1Class-tile2Class == 1 || tile2Class-tile1Class == 1 {
-		if !common.Contain(tile1Class, []int{0, 9, 18, 8, 17, 26}) && !common.Contain(tile2Class, []int{0, 9, 18, 8, 17, 26}) {
-			posClass = Tiles{tile1Class - 1, tile1Class + 1, tile2Class - 1, tile2Class + 1}
-			posClass = posClass.Remove(tileClass)
-			posClass = posClass.Remove(tile1Class)
-			posClass = posClass.Remove(tile2Class)
+		if !common.Contain(tile1Class, TileClasses{0, 9, 18, 8, 17, 26}) &&
+			!common.Contain(tile2Class, TileClasses{0, 9, 18, 8, 17, 26}) {
+			posClass = TileClasses{tile1Class - 1, tile1Class + 1, tile2Class - 1, tile2Class + 1}
+			posClass.Remove(tileClass)
+			posClass.Remove(tile1Class)
+			posClass.Remove(tile2Class)
 		}
 	}
-	posClass = append(posClass, tileClass)
+	posClass.Append(tileClass)
 	for _, tile := range pMain.HandTiles {
-		if common.Contain(tile/4, posClass) {
+		if common.Contain(tile.Class(), posClass) {
 			game.Tiles.allTiles[tile].discardable = false
 		} else {
 			game.Tiles.allTiles[tile].discardable = true
@@ -391,11 +392,11 @@ func (game *Game) processChi(pMain *Player, call *Call) {
 }
 
 func (game *Game) processPon(pMain *Player, call *Call) {
-	pMain.HandTiles = pMain.HandTiles.Remove(call.CallTiles[0])
-	pMain.HandTiles = pMain.HandTiles.Remove(call.CallTiles[1])
+	pMain.HandTiles.Remove(call.CallTiles[0])
+	pMain.HandTiles.Remove(call.CallTiles[1])
 	tileID := call.CallTiles[2]
 	subWind := call.CallTilesFromWho[2]
-	game.posPlayer[subWind].BoardTiles = game.posPlayer[subWind].BoardTiles.Remove(tileID)
+	game.posPlayer[subWind].BoardTiles.Remove(tileID)
 	pMain.Melds = append(pMain.Melds, call)
 	// 食替
 	tileClass := tileID / 4
@@ -410,32 +411,32 @@ func (game *Game) processPon(pMain *Player, call *Call) {
 }
 
 func (game *Game) processDaiMinKan(pMain *Player, call *Call) {
-	pMain.HandTiles = pMain.HandTiles.Remove(call.CallTiles[0])
-	pMain.HandTiles = pMain.HandTiles.Remove(call.CallTiles[1])
-	pMain.HandTiles = pMain.HandTiles.Remove(call.CallTiles[2])
+	pMain.HandTiles.Remove(call.CallTiles[0])
+	pMain.HandTiles.Remove(call.CallTiles[1])
+	pMain.HandTiles.Remove(call.CallTiles[2])
 	tileID := call.CallTiles[3]
 	subWind := call.CallTilesFromWho[3]
-	game.posPlayer[subWind].BoardTiles = game.posPlayer[subWind].BoardTiles.Remove(tileID)
+	game.posPlayer[subWind].BoardTiles.Remove(tileID)
 
-	pMain.Melds = append(pMain.Melds, call)
+	pMain.Melds.Append(call)
 }
 
 func (game *Game) processAnKan(pMain *Player, call *Call) {
-	pMain.HandTiles = pMain.HandTiles.Remove(call.CallTiles[0])
-	pMain.HandTiles = pMain.HandTiles.Remove(call.CallTiles[1])
-	pMain.HandTiles = pMain.HandTiles.Remove(call.CallTiles[2])
-	pMain.HandTiles = pMain.HandTiles.Remove(call.CallTiles[3])
-	pMain.Melds = append(pMain.Melds, call)
+	pMain.HandTiles.Remove(call.CallTiles[0])
+	pMain.HandTiles.Remove(call.CallTiles[1])
+	pMain.HandTiles.Remove(call.CallTiles[2])
+	pMain.HandTiles.Remove(call.CallTiles[3])
+	pMain.Melds.Append(call)
 }
 
 func (game *Game) processShouMinKan(pMain *Player, call *Call) {
 	tileID := call.CallTiles[3]
-	pMain.HandTiles = pMain.HandTiles.Remove(tileID)
+	pMain.HandTiles.Remove(tileID)
 	for i, meld := range pMain.Melds {
 		if meld.CallType != Pon {
 			continue
 		}
-		if meld.CallTiles[0]/4 != tileID/4 {
+		if meld.CallTiles[0].Class() != tileID.Class() {
 			continue
 		}
 		pMain.Melds[i] = call
@@ -450,8 +451,8 @@ func (game *Game) processKyuuShuKyuuHai() *Result {
 	}
 }
 
-func (game *Game) judgeRon(pMain *Player, tileID int) Calls {
-	if pMain.IsFuriten() || !common.Contain(tileID/4, pMain.TenhaiSlice) {
+func (game *Game) judgeRon(pMain *Player, tileID Tile) Calls {
+	if pMain.IsFuriten() || !common.Contain(tileID.Class(), pMain.TenhaiSlice) {
 		return make(Calls, 0)
 	}
 	if game.Tiles.allTiles[tileID].isLast {
@@ -469,7 +470,7 @@ func (game *Game) judgeRon(pMain *Player, tileID int) Calls {
 	}}
 }
 
-func (game *Game) judgeChanKan(pMain *Player, tileID int, isAnKan bool) Calls {
+func (game *Game) judgeChanKan(pMain *Player, tileID Tile, isAnKan bool) Calls {
 	if pMain.IsFuriten() || !common.Contain(tileID/4, pMain.TenhaiSlice) {
 		return make(Calls, 0)
 	}
@@ -550,34 +551,34 @@ func (game *Game) judgeRiichi(pMain *Player) Calls {
 	return riichiCalls
 }
 
-func (game *Game) judgeChi(pMain *Player, tileID int) Calls {
+func (game *Game) judgeChi(pMain *Player, tileID Tile) Calls {
 	discardWind := game.Tiles.allTiles[tileID].discardWind
-	chiClass := tileID / 4
+	chiClass := tileID.Class()
 	if pMain.IsRiichi || (pMain.Wind-discardWind+4)%4 != 1 || chiClass >= 27 || game.Tiles.allTiles[tileID].isLast {
 		return make(Calls, 0)
 	}
-	handTilesClass := Tiles(pMain.GetHandTilesClass())
+	handTilesClass := pMain.GetHandTilesClass()
 	if !(common.Contain(chiClass-1, handTilesClass) ||
 		common.Contain(chiClass-2, handTilesClass) ||
 		common.Contain(chiClass+1, handTilesClass) ||
 		common.Contain(chiClass+2, handTilesClass)) {
 		return make(Calls, 0)
 	}
-	var posCombinations [][]int
-	if common.Contain(chiClass, []int{0, 9, 18}) {
-		posCombinations = append(posCombinations, []int{chiClass + 1, chiClass + 2})
-	} else if common.Contain(chiClass, []int{1, 10, 19}) {
-		posCombinations = append(posCombinations, []int{chiClass - 1, chiClass + 1})
-		posCombinations = append(posCombinations, []int{chiClass + 1, chiClass + 2})
-	} else if common.Contain(chiClass, []int{7, 16, 25}) {
-		posCombinations = append(posCombinations, []int{chiClass - 1, chiClass + 1})
-		posCombinations = append(posCombinations, []int{chiClass - 2, chiClass - 1})
-	} else if common.Contain(chiClass, []int{8, 17, 26}) {
-		posCombinations = append(posCombinations, []int{chiClass - 2, chiClass - 1})
+	var posCombinations []TileClasses
+	if common.Contain(chiClass, TileClasses{0, 9, 18}) {
+		posCombinations = append(posCombinations, TileClasses{chiClass + 1, chiClass + 2})
+	} else if common.Contain(chiClass, TileClasses{1, 10, 19}) {
+		posCombinations = append(posCombinations, TileClasses{chiClass - 1, chiClass + 1})
+		posCombinations = append(posCombinations, TileClasses{chiClass + 1, chiClass + 2})
+	} else if common.Contain(chiClass, TileClasses{7, 16, 25}) {
+		posCombinations = append(posCombinations, TileClasses{chiClass - 1, chiClass + 1})
+		posCombinations = append(posCombinations, TileClasses{chiClass - 2, chiClass - 1})
+	} else if common.Contain(chiClass, TileClasses{8, 17, 26}) {
+		posCombinations = append(posCombinations, TileClasses{chiClass - 2, chiClass - 1})
 	} else {
-		posCombinations = append(posCombinations, []int{chiClass - 1, chiClass + 1})
-		posCombinations = append(posCombinations, []int{chiClass + 1, chiClass + 2})
-		posCombinations = append(posCombinations, []int{chiClass - 2, chiClass - 1})
+		posCombinations = append(posCombinations, TileClasses{chiClass - 1, chiClass + 1})
+		posCombinations = append(posCombinations, TileClasses{chiClass + 1, chiClass + 2})
+		posCombinations = append(posCombinations, TileClasses{chiClass - 2, chiClass - 1})
 	}
 	var posCalls Calls
 	for _, posCom := range posCombinations {
@@ -595,8 +596,8 @@ func (game *Game) judgeChi(pMain *Player, tileID int) Calls {
 			CallTiles:        Tiles{tile1ID, tile2ID, tileID, -1},
 			CallTilesFromWho: []Wind{pMain.Wind, pMain.Wind, discardWind, WindDummy},
 		}
-		posCalls = append(posCalls, &posCall)
-		if common.Contain(tile1ID, []int{16, 52, 88}) {
+		posCalls.Append(&posCall)
+		if common.Contain(tile1ID, Tiles{16, 52, 88}) {
 			tile1Idx2 := handTilesClass.Index(tile1Class, tile1Idx1+1)
 			if tile1Idx2 != -1 {
 				tile1ID = pMain.HandTiles[tile1Idx2]
@@ -605,9 +606,9 @@ func (game *Game) judgeChi(pMain *Player, tileID int) Calls {
 					CallTiles:        Tiles{tile1ID, tile2ID, tileID, -1},
 					CallTilesFromWho: []Wind{pMain.Wind, pMain.Wind, discardWind, WindDummy},
 				}
-				posCalls = append(posCalls, &posCall)
+				posCalls.Append(&posCall)
 			}
-		} else if common.Contain(tile2ID, []int{16, 52, 88}) {
+		} else if common.Contain(tile2ID, Tiles{16, 52, 88}) {
 			tile2Idx2 := handTilesClass.Index(tile2Class, tile2Idx1+1)
 			if tile2Idx2 != -1 {
 				tile2ID = pMain.HandTiles[tile2Idx2]
@@ -616,7 +617,7 @@ func (game *Game) judgeChi(pMain *Player, tileID int) Calls {
 					CallTiles:        Tiles{tile1ID, tile2ID, tileID, -1},
 					CallTilesFromWho: []Wind{pMain.Wind, pMain.Wind, discardWind, WindDummy},
 				}
-				posCalls = append(posCalls, &posCall)
+				posCalls.Append(&posCall)
 			}
 		}
 	}
@@ -630,24 +631,25 @@ func (game *Game) judgeChi(pMain *Player, tileID int) Calls {
 		tile2ID := call.CallTiles[1]
 		tile3ID := call.CallTiles[2]
 		handTilesCopy := pMain.HandTiles.Copy()
-		handTilesCopy = handTilesCopy.Remove(tile1ID)
-		handTilesCopy = handTilesCopy.Remove(tile2ID)
-		tileClass := tile3ID / 4
-		tile1Class := tile1ID / 4
-		tile2Class := tile2ID / 4
-		posClass := make(Tiles, 0, 4)
+		handTilesCopy.Remove(tile1ID)
+		handTilesCopy.Remove(tile2ID)
+		tileClass := tile3ID.Class()
+		tile1Class := tile1ID.Class()
+		tile2Class := tile2ID.Class()
+		posClass := make(TileClasses, 0, 4)
 		if tile1Class-tile2Class == 1 || tile2Class-tile1Class == 1 {
-			if !common.Contain(tile1Class, []int{0, 9, 18, 8, 17, 26}) && !common.Contain(tile2Class, []int{0, 9, 18, 8, 17, 26}) {
-				posClass = Tiles{tile1Class - 1, tile1Class + 1, tile2Class - 1, tile2Class + 1}
-				posClass = posClass.Remove(tileClass)
-				posClass = posClass.Remove(tile1Class)
-				posClass = posClass.Remove(tile2Class)
+			if !common.Contain(tile1Class, TileClasses{0, 9, 18, 8, 17, 26}) &&
+				!common.Contain(tile2Class, TileClasses{0, 9, 18, 8, 17, 26}) {
+				posClass = TileClasses{tile1Class - 1, tile1Class + 1, tile2Class - 1, tile2Class + 1}
+				posClass.Remove(tileClass)
+				posClass.Remove(tile1Class)
+				posClass.Remove(tile2Class)
 			}
 		}
-		posClass = append(posClass, tileClass)
+		posClass.Append(tileClass)
 		flag := true
 		for _, handTilesID := range handTilesCopy {
-			if !common.Contain(handTilesID/4, posClass) {
+			if !common.Contain(handTilesID.Class(), posClass) {
 				flag = false
 				break
 			}
@@ -662,13 +664,13 @@ func (game *Game) judgeChi(pMain *Player, tileID int) Calls {
 	return posCalls
 }
 
-func (game *Game) judgePon(pMain *Player, tileID int) Calls {
+func (game *Game) judgePon(pMain *Player, tileID Tile) Calls {
 	if pMain.IsRiichi {
 		return make(Calls, 0)
 	}
 	discardWind := game.Tiles.allTiles[tileID].discardWind
-	ponClass := tileID / 4
-	tilesClass := Tiles(pMain.GetHandTilesClass())
+	ponClass := tileID.Class()
+	tilesClass := pMain.GetHandTilesClass()
 	tileCount := tilesClass.Count(ponClass)
 	if tileCount < 2 || game.Tiles.allTiles[tileID].isLast {
 		return make(Calls, 0)
@@ -690,21 +692,21 @@ func (game *Game) judgePon(pMain *Player, tileID int) Calls {
 			panic("no tile3")
 		}
 		tile3ID := pMain.HandTiles[tile3Idx]
-		if common.Contain(tile1ID, []int{16, 52, 88}) {
+		if common.Contain(tile1ID, TileClasses{16, 52, 88}) {
 			posCall = Call{
 				CallType:         Pon,
 				CallTiles:        Tiles{tile2ID, tile3ID, tileID, -1},
 				CallTilesFromWho: []Wind{pMain.Wind, pMain.Wind, discardWind, WindDummy},
 			}
 			posCalls = append(posCalls, &posCall)
-		} else if common.Contain(tile2ID, []int{16, 52, 88}) {
+		} else if common.Contain(tile2ID, TileClasses{16, 52, 88}) {
 			posCall = Call{
 				CallType:         Pon,
 				CallTiles:        Tiles{tile1ID, tile3ID, tileID, -1},
 				CallTilesFromWho: []Wind{pMain.Wind, pMain.Wind, discardWind, WindDummy},
 			}
 			posCalls = append(posCalls, &posCall)
-		} else if common.Contain(tile3ID, []int{16, 52, 88}) {
+		} else if common.Contain(tile3ID, TileClasses{16, 52, 88}) {
 			posCall = Call{
 				CallType:         Pon,
 				CallTiles:        Tiles{tile1ID, tile3ID, tileID, -1},
@@ -716,17 +718,19 @@ func (game *Game) judgePon(pMain *Player, tileID int) Calls {
 	return posCalls
 }
 
-func (game *Game) judgeDaiMinKan(pMain *Player, tileID int) Calls {
+func (game *Game) judgeDaiMinKan(pMain *Player, tileID Tile) Calls {
 	discardWind := game.Tiles.allTiles[tileID].discardWind
 	if pMain.IsRiichi || game.Tiles.allTiles[tileID].isLast || game.Tiles.NumRemainTiles == 0 {
 		return make(Calls, 0)
 	}
-	kanClass := tileID / 4
-	tileCount := Tiles(pMain.GetHandTilesClass()).Count(kanClass)
+	kanClass := tileID.Class()
+	class := pMain.GetHandTilesClass()
+	tileCount := class.Count(kanClass)
 	if tileCount < 2 {
 		return make(Calls, 0)
 	}
-	posKanTiles := Tiles{kanClass * 4, kanClass*4 + 1, kanClass*4 + 2, kanClass*4 + 3}.Remove(tileID)
+	posKanTiles := Tiles{Tile(kanClass * 4), Tile(kanClass*4 + 1), Tile(kanClass*4 + 2), Tile(kanClass*4 + 3)}
+	posKanTiles.Remove(tileID)
 	tile0 := posKanTiles[0]
 	tile1 := posKanTiles[1]
 	tile2 := posKanTiles[2]
@@ -749,15 +753,15 @@ func (game *Game) judgeAnKan(pMain *Player) Calls {
 	if len(pMain.HandTiles) == 2 || game.Tiles.NumRemainTiles == 0 {
 		return make(Calls, 0)
 	}
-	tilesClass := Tiles(pMain.GetHandTilesClass())
-	var posClass []int
+	tilesClass := pMain.GetHandTilesClass()
+	var posClass TileClasses
 	var posCalls = make(Calls, 0)
 	for _, tileClass := range tilesClass {
 		if common.Contain(tileClass, posClass) {
 			continue
 		}
 		if tilesClass.Count(tileClass) == 4 {
-			posClass = append(posClass, tileClass)
+			posClass.Append(tileClass)
 			a := tilesClass.Index(tileClass, 0)
 			b := tilesClass.Index(tileClass, a+1)
 			c := tilesClass.Index(tileClass, b+1)
@@ -785,7 +789,7 @@ func (game *Game) judgeAnKan(pMain *Player) Calls {
 					continue
 				}
 			}
-			posCalls = append(posCalls, &posCall)
+			posCalls.Append(&posCall)
 		}
 	}
 	return posCalls
@@ -800,9 +804,9 @@ func (game *Game) judgeShouMinKan(pMain *Player) Calls {
 		if call.CallType != Pon {
 			continue
 		}
-		ponClass := call.CallTiles[0] / 4
+		ponClass := call.CallTiles[0].Class()
 		for _, tileID := range pMain.HandTiles {
-			if tileID/4 == ponClass && game.Tiles.allTiles[tileID].discardable {
+			if tileID.Class() == ponClass && game.Tiles.allTiles[tileID].discardable {
 				c := call.Copy()
 				c.CallType = ShouMinKan
 				c.CallTiles = append(c.CallTiles[:3], tileID)
@@ -818,10 +822,10 @@ func (game *Game) judgeKyuShuKyuHai(pMain *Player) Calls {
 	if pMain.JunNum > 1 || !pMain.RyuukyokuStatus {
 		return make(Calls, 0)
 	}
-	kyuHai := make(map[int]bool)
+	kyuHai := make(map[TileClass]struct{})
 	for _, tileID := range pMain.HandTiles {
-		if common.Contain(tileID/4, []int{0, 8, 9, 17, 18, 26, 27, 28, 29, 30, 31, 32, 33}) {
-			kyuHai[tileID/4] = true
+		if common.Contain(tileID.Class(), TileClasses{0, 8, 9, 17, 18, 26, 27, 28, 29, 30, 31, 32, 33}) {
+			kyuHai[tileID.Class()] = struct{}{}
 		}
 	}
 	if len(kyuHai) < 9 {
@@ -834,7 +838,7 @@ func (game *Game) judgeKyuShuKyuHai(pMain *Player) Calls {
 	}}
 }
 
-func (game *Game) getRonResult(pMain *Player, winTile int) (r *Result) {
+func (game *Game) getRonResult(pMain *Player, winTile Tile) (r *Result) {
 	defer func() {
 		if err := recover(); err != nil { // 如果recover返回为空，说明没报错
 			r = nil
@@ -845,12 +849,12 @@ func (game *Game) getRonResult(pMain *Player, winTile int) (r *Result) {
 	var handTiles Tiles
 	for _, tile := range pMain.HandTiles {
 		if tile != winTile {
-			handTiles = append(handTiles, tile)
+			handTiles.Append(tile)
 		}
 	}
 
 	ctx := &yaku.Context{
-		Tile:        IntToInstance(winTile),
+		Tile:        IntToInstance(int(winTile)),
 		SelfWind:    base.Wind(pMain.Wind),
 		RoundWind:   base.Wind(game.WindRound / 4),
 		DoraTiles:   IntsToTiles(IndicatorsToDora(game.Tiles.DoraIndicators())),
@@ -877,7 +881,7 @@ func (game *Game) getRonResult(pMain *Player, winTile int) (r *Result) {
 }
 
 func (game *Game) judgeSuuFonRenDa() bool {
-	var tileClass int = game.posPlayer[South].BoardTiles[len(game.posPlayer[South].BoardTiles)-1] / 4
+	var tileClass = game.posPlayer[East].BoardTiles[len(game.posPlayer[South].BoardTiles)-1].Class()
 	if tileClass != 27 && tileClass != 28 && tileClass != 29 && tileClass != 30 {
 		return false
 	}
@@ -888,7 +892,7 @@ func (game *Game) judgeSuuFonRenDa() bool {
 		if !player.IppatsuStatus {
 			return false
 		}
-		if player.BoardTiles[len(player.BoardTiles)-1]/4 != tileClass {
+		if player.BoardTiles[len(player.BoardTiles)-1].Class() != tileClass {
 			return false
 		}
 	}

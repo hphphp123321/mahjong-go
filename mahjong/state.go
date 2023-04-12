@@ -25,7 +25,7 @@ func (s *InitState) step() map[Wind]Calls {
 	var posEvent = make(map[Wind]Event)
 	for wind, player := range s.g.posPlayer {
 		player.HandTiles = initTiles[wind]
-		sort.Ints(player.HandTiles)
+		sort.Sort(&player.HandTiles)
 		player.Wind = wind
 		posEvent[wind] = &EventStart{
 			WindRound: s.g.WindRound,
@@ -85,7 +85,7 @@ func (s *DealState) step() map[Wind]Calls {
 	// generate event
 	var posEvent = make(map[Wind]Event)
 	for wind := range s.g.posPlayer {
-		var t = -1
+		var t = TileDummy
 		if wind == pMain.Wind {
 			t = tile
 		}
@@ -193,7 +193,7 @@ func (s *DealState) String() string {
 
 type DiscardState struct {
 	g         *Game
-	tileID    int
+	tileID    Tile
 	tsumoGiri bool
 }
 
@@ -560,8 +560,8 @@ func (s *EndState) step() map[Wind]Calls {
 				if len(bSlice) != 0 {
 					s.g.processNagashiMangan(bSlice)
 					// generate nagashi mangan events
-					for w := range s.g.posPlayer {
-						for _, wind := range bSlice {
+					for _, wind := range bSlice {
+						for w := range s.g.posPlayer {
 							posEvent[w] = &EventNagashiMangan{
 								Who: wind,
 							}
@@ -569,6 +569,7 @@ func (s *EndState) step() map[Wind]Calls {
 						s.g.addPosEvent(posEvent)
 						posEvent = make(map[Wind]Event)
 					}
+
 				} else {
 					s.g.processNormalRyuuKyoku(tenhaiWinds)
 				}
@@ -646,7 +647,7 @@ func (s *EndState) step() map[Wind]Calls {
 		// generate double ron events
 		s.g.addRonEvents(s.posResults)
 	default:
-		// normal ron, tsumo, chankan, kyushukyuhai
+		// normal ron, tsumo, chankan, kyuushukyuuhai
 		var wind Wind
 		var result *Result
 		for w, r := range s.posResults {
@@ -655,10 +656,12 @@ func (s *EndState) step() map[Wind]Calls {
 		}
 		if result.RyuuKyokuReason == RyuuKyokuKyuuShuKyuuHai {
 			// generate ryuu kyoku events
-			posEvent[wind] = &EventRyuuKyoku{
-				Who:       wind,
-				HandTiles: s.g.posPlayer[wind].HandTiles,
-				Reason:    RyuuKyokuKyuuShuKyuuHai,
+			for w := range s.g.posPlayer {
+				posEvent[w] = &EventRyuuKyoku{
+					Who:       wind,
+					HandTiles: s.g.posPlayer[wind].HandTiles,
+					Reason:    RyuuKyokuKyuuShuKyuuHai,
+				}
 			}
 			s.g.addPosEvent(posEvent)
 			posEvent = make(map[Wind]Event)

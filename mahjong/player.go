@@ -17,7 +17,7 @@ type Player struct {
 	Melds           Calls
 	TenhaiTiles     Tiles
 	ShantenNum      int
-	TenhaiSlice     []int
+	TenhaiSlice     []TileClass
 	JunFuriten      bool
 	DiscardFuriten  bool
 	RiichiFuriten   bool
@@ -49,7 +49,7 @@ func NewMahjongPlayer() *Player {
 
 func (player *Player) InitTilesWind(tiles Tiles, wind Wind) {
 	player.HandTiles = tiles
-	sort.Ints(player.HandTiles)
+	sort.Sort(&player.HandTiles)
 	player.Wind = wind
 }
 
@@ -57,7 +57,7 @@ func (player *Player) GetShantenNum() int {
 	return CalculateShantenNum(player.HandTiles, player.Melds)
 }
 
-func (player *Player) GetTenhaiSlice() []int {
+func (player *Player) GetTenhaiSlice() []TileClass {
 	return GetTenhaiSlice(player.HandTiles.Copy(), player.Melds.Copy())
 }
 
@@ -70,7 +70,7 @@ func (player *Player) GetRiichiTiles() Tiles {
 	for _, tile := range player.HandTiles {
 		handTilesCopy = append(handTilesCopy, -1)
 		copy(handTilesCopy, player.HandTiles)
-		handTilesCopy = handTilesCopy.Remove(tile)
+		handTilesCopy.Remove(tile)
 		shantenNum := CalculateShantenNum(handTilesCopy, player.Melds)
 		if shantenNum == 0 {
 			rTiles = append(rTiles, tile)
@@ -79,10 +79,10 @@ func (player *Player) GetRiichiTiles() Tiles {
 	return rTiles
 }
 
-func (player *Player) GetHandTilesClass() []int {
-	tilesClass := make([]int, 0, len(player.HandTiles))
+func (player *Player) GetHandTilesClass() TileClasses {
+	tilesClass := make([]TileClass, 0, len(player.HandTiles))
 	for _, tile := range player.HandTiles {
-		tilesClass = append(tilesClass, tile/4)
+		tilesClass = append(tilesClass, tile.Class())
 	}
 	return tilesClass
 }
@@ -114,7 +114,7 @@ func (player *Player) ResetForRound() {
 	player.Melds = make(Calls, 0, 4)
 	player.TenhaiTiles = make(Tiles, 0, 13)
 	player.ShantenNum = 7
-	player.TenhaiSlice = Tiles{}
+	player.TenhaiSlice = []TileClass{}
 	player.JunFuriten = false
 	player.DiscardFuriten = false
 	player.RiichiFuriten = false

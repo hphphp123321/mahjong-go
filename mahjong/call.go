@@ -88,3 +88,12 @@ func (calls *Calls) Copy() Calls {
 	copy(callsCopy, *calls)
 	return callsCopy
 }
+
+func (calls *Calls) Append(call *Call) {
+	*calls = append(*calls, call)
+}
+
+func (calls *Calls) Remove(call *Call) {
+	idx := calls.Index(call)
+	*calls = append((*calls)[:idx], (*calls)[idx+1:]...)
+}

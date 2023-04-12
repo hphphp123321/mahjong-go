@@ -14,7 +14,7 @@ func IntToInstance(t int) tile.Instance {
 func IntsToInstances(tiles Tiles) tile.Instances {
 	instances := tile.Instances{}
 	for _, num := range tiles {
-		instances = append(instances, IntToInstance(num))
+		instances = append(instances, IntToInstance(int(num)))
 	}
 	return instances
 }
@@ -31,19 +31,19 @@ func CallToMeld(call *Call) calc.Meld {
 	var meld calc.Meld
 	switch call.CallType {
 	case Chi:
-		var tileClass int = common.MinNum(call.CallTiles[:3])/4 + 1
+		var tileClass = common.MinNum(call.CallTiles[:3]).Class() + 1
 		meld = calc.Open(calc.Chi(tile.Tile(tileClass)))
 	case Pon:
-		var tileClass int = call.CallTiles[0]/4 + 1
+		var tileClass = call.CallTiles[0].Class() + 1
 		meld = calc.Open(calc.Pon(tile.Tile(tileClass)))
 	case DaiMinKan:
-		var tileClass int = call.CallTiles[0]/4 + 1
+		var tileClass = call.CallTiles[0].Class() + 1
 		meld = calc.Open(calc.Kan(tile.Tile(tileClass)))
 	case ShouMinKan:
-		var tileClass int = call.CallTiles[0]/4 + 1
+		var tileClass = call.CallTiles[0].Class() + 1
 		meld = calc.Open(calc.Kan(tile.Tile(tileClass)))
 	case AnKan:
-		var tileClass int = call.CallTiles[0]/4 + 1
+		var tileClass = call.CallTiles[0].Class() + 1
 		meld = calc.Kan(tile.Tile(tileClass))
 	}
 	return meld

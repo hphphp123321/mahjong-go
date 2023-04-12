@@ -40,7 +40,9 @@ func TestGame(t *testing.T) {
 			eventIndex += len(events)
 			if len(posCalls) == 4 {
 				eventIndex = 0
-				if events[0].GetType() == mahjong.EventTypeTsumo || events[0].GetType() == mahjong.EventTypeRon || events[0].GetType() == mahjong.EventTypeChanKan {
+				if events[0].GetType() == mahjong.EventTypeTsumo ||
+					events[0].GetType() == mahjong.EventTypeRon ||
+					events[0].GetType() == mahjong.EventTypeChanKan {
 					b, _ := json.Marshal(&events)
 					fmt.Println(string(b))
 				}

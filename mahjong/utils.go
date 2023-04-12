@@ -15,14 +15,14 @@ func CalculateShantenNum(handTiles Tiles, melds Calls) int {
 	return res.Total.Value
 }
 
-func GetTenhaiSlice(handTiles Tiles, melds Calls) []int {
-	var tenhaiSlice []int
+func GetTenhaiSlice(handTiles Tiles, melds Calls) TileClasses {
+	var tenhaiSlice TileClasses
 
 	instances, meldsOpt := TilesCallsToCalc(handTiles, melds)
 	res := tempai.Calculate(instances, meldsOpt)
 	tiles := tempai.GetWaits(res).Tiles()
 	for _, t := range tiles {
-		tenhaiSlice = append(tenhaiSlice, int(t)-1)
+		tenhaiSlice = append(tenhaiSlice, TileClass(int(t)-1))
 	}
 	return tenhaiSlice
 }
@@ -35,7 +35,7 @@ func IndicatorsToDora(indicators Tiles) Tiles {
 	return doraTiles
 }
 
-func IndicatorToDora(indicator int) int {
+func IndicatorToDora(indicator Tile) Tile {
 	switch indicator {
 	case 32, 33, 34, 35, 68, 69, 70, 71, 104, 105, 106, 107:
 		return indicator - 32

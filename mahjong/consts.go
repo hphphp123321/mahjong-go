@@ -157,114 +157,114 @@ type Tile int
 //go:generate stringer -type=Tile
 const (
 	TileDummy Tile = -1 + iota
-	Man11
-	Man12
-	Man13
-	Man14
-	Man21
-	Man22
-	Man23
-	Man24
-	Man31
-	Man32
-	Man33
-	Man34
-	Man41
-	Man42
-	Man43
-	Man44
-	Man51
-	Man52
-	Man53
-	Man54
-	Man61
-	Man62
-	Man63
-	Man64
-	Man71
-	Man72
-	Man73
-	Man74
-	Man81
-	Man82
-	Man83
-	Man84
-	Man91
-	Man92
-	Man93
-	Man94
-	Pin11
-	Pin12
-	Pin13
-	Pin14
-	Pin21
-	Pin22
-	Pin23
-	Pin24
-	Pin31
-	Pin32
-	Pin33
-	Pin34
-	Pin41
-	Pin42
-	Pin43
-	Pin44
-	Pin51
-	Pin52
-	Pin53
-	Pin54
-	Pin61
-	Pin62
-	Pin63
-	Pin64
-	Pin71
-	Pin72
-	Pin73
-	Pin74
-	Pin81
-	Pin82
-	Pin83
-	Pin84
-	Pin91
-	Pin92
-	Pin93
-	Pin94
-	Sou11
-	Sou12
-	Sou13
-	Sou14
-	Sou21
-	Sou22
-	Sou23
-	Sou24
-	Sou31
-	Sou32
-	Sou33
-	Sou34
-	Sou41
-	Sou42
-	Sou43
-	Sou44
-	Sou51
-	Sou52
-	Sou53
-	Sou54
-	Sou61
-	Sou62
-	Sou63
-	Sou64
-	Sou71
-	Sou72
-	Sou73
-	Sou74
-	Sou81
-	Sou82
-	Sou83
-	Sou84
-	Sou91
-	Sou92
-	Sou93
-	Sou94
+	Man1T1
+	Man1T2
+	Man1T3
+	Man1T4
+	Man2T1
+	Man2T2
+	Man2T3
+	Man2T4
+	Man3T1
+	Man3T2
+	Man3T3
+	Man3T4
+	Man4T1
+	Man4T2
+	Man4T3
+	Man4T4
+	Man5T1
+	Man5T2
+	Man5T3
+	Man5T4
+	Man6T1
+	Man6T2
+	Man6T3
+	Man6T4
+	Man7T1
+	Man7T2
+	Man7T3
+	Man7T4
+	Man8T1
+	Man8T2
+	Man8T3
+	Man8T4
+	Man9T1
+	Man9T2
+	Man9T3
+	Man9T4
+	Pin1T1
+	Pin1T2
+	Pin1T3
+	Pin1T4
+	Pin2T1
+	Pin2T2
+	Pin2T3
+	Pin2T4
+	Pin3T1
+	Pin3T2
+	Pin3T3
+	Pin3T4
+	Pin4T1
+	Pin4T2
+	Pin4T3
+	Pin4T4
+	Pin5T1
+	Pin5T2
+	Pin5T3
+	Pin5T4
+	Pin6T1
+	Pin6T2
+	Pin6T3
+	Pin6T4
+	Pin7T1
+	Pin7T2
+	Pin7T3
+	Pin7T4
+	Pin8T1
+	Pin8T2
+	Pin8T3
+	Pin8T4
+	Pin9T1
+	Pin9T2
+	Pin9T3
+	Pin9T4
+	Sou1T1
+	Sou1T2
+	Sou1T3
+	Sou1T4
+	Sou2T1
+	Sou2T2
+	Sou2T3
+	Sou2T4
+	Sou3T1
+	Sou3T2
+	Sou3T3
+	Sou3T4
+	Sou4T1
+	Sou4T2
+	Sou4T3
+	Sou4T4
+	Sou5T1
+	Sou5T2
+	Sou5T3
+	Sou5T4
+	Sou6T1
+	Sou6T2
+	Sou6T3
+	Sou6T4
+	Sou7T1
+	Sou7T2
+	Sou7T3
+	Sou7T4
+	Sou8T1
+	Sou8T2
+	Sou8T3
+	Sou8T4
+	Sou9T1
+	Sou9T2
+	Sou9T3
+	Sou9T4
 	Ton1
 	Ton2
 	Ton3
@@ -297,7 +297,7 @@ const (
 
 var MapStringToTile = func() map[string]Tile {
 	m := make(map[string]Tile)
-	for i := Man11; i <= Chun4; i++ {
+	for i := Man1T1; i <= Chun4; i++ {
 		m[i.String()] = i
 	}
 	return m
@@ -354,5 +354,24 @@ var MapStringToTileClass = func() map[string]TileClass {
 	}
 	return m
 }()
+
+var TileClassMap = map[Tile]TileClass{0: 0, 1: 0, 2: 0, 3: 0, 4: 1, 5: 1, 6: 1, 7: 1, 8: 2, 9: 2, 10: 2, 11: 2, 12: 3,
+	13: 3, 14: 3, 15: 3, 16: 34, 17: 4, 18: 4, 19: 4, 20: 5, 21: 5, 22: 5, 23: 5, 24: 6, 25: 6, 26: 6, 27: 6, 28: 7,
+	29: 7, 30: 7, 31: 7, 32: 8, 33: 8, 34: 8, 35: 8, 36: 9, 37: 9, 38: 9, 39: 9, 40: 10, 41: 10, 42: 10, 43: 10,
+	44: 11, 45: 11, 46: 11, 47: 11, 48: 12, 49: 12, 50: 12, 51: 12, 52: 35, 53: 13, 54: 13, 55: 13, 56: 14, 57: 14,
+	58: 14, 59: 14, 60: 15, 61: 15, 62: 15, 63: 15, 64: 16, 65: 16, 66: 16, 67: 16, 68: 17, 69: 17, 70: 17, 71: 17,
+	72: 18, 73: 18, 74: 18, 75: 18, 76: 19, 77: 19, 78: 19, 79: 19, 80: 20, 81: 20, 82: 20, 83: 20, 84: 21, 85: 21,
+	86: 21, 87: 21, 88: 36, 89: 22, 90: 22, 91: 22, 92: 23, 93: 23, 94: 23, 95: 23, 96: 24, 97: 24, 98: 24, 99: 24,
+	100: 25, 101: 25, 102: 25, 103: 25, 104: 26, 105: 26, 106: 26, 107: 26, 108: 27, 109: 27, 110: 27, 111: 27,
+	112: 28, 113: 28, 114: 28, 115: 28, 116: 29, 117: 29, 118: 29, 119: 29, 120: 30, 121: 30, 122: 30, 123: 30,
+	124: 31, 125: 31, 126: 31, 127: 31, 128: 32, 129: 32, 130: 32, 131: 32, 132: 33, 133: 33, 134: 33, 135: 33, -1: -1}
+
+var TileClassUTF = map[TileClass]string{
+	0: "🀇", 1: "🀈", 2: "🀉", 3: "🀊", 4: "🀋", 5: "🀌", 6: "🀍", 7: "🀎", 8: "🀏",
+	9: "🀙", 10: "🀚", 11: "🀛", 12: "🀜", 13: "🀝", 14: "🀞", 15: "🀟", 16: "🀠", 17: "🀡",
+	18: "🀐", 19: "🀑", 20: "🀒", 21: "🀓", 22: "🀔", 23: "🀕", 24: "🀖", 25: "🀗", 26: "🀘",
+	27: "🀀", 28: "🀁", 29: "🀂", 30: "🀃", 31: "🀆", 32: "🀅", 33: "🀄",
+	34: "[🀋]", 35: "[🀝]", 36: "[🀔]",
+}
 
 var ErrGameEnd = errors.New("game is end")

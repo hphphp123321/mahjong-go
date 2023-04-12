@@ -1,34 +1,40 @@
 package mahjong
 
 import (
+	"encoding/json"
 	"errors"
 	"math/rand"
 	"sort"
 )
 
-var TileClassMap = map[int]int{0: 0, 1: 0, 2: 0, 3: 0, 4: 1, 5: 1, 6: 1, 7: 1, 8: 2, 9: 2, 10: 2, 11: 2, 12: 3, 13: 3, 14: 3, 15: 3, 16: 34, 17: 4, 18: 4, 19: 4, 20: 5, 21: 5, 22: 5, 23: 5, 24: 6, 25: 6, 26: 6, 27: 6, 28: 7, 29: 7, 30: 7, 31: 7, 32: 8, 33: 8, 34: 8, 35: 8, 36: 9, 37: 9, 38: 9, 39: 9, 40: 10, 41: 10, 42: 10, 43: 10, 44: 11, 45: 11, 46: 11, 47: 11, 48: 12, 49: 12, 50: 12, 51: 12, 52: 35, 53: 13, 54: 13, 55: 13, 56: 14, 57: 14, 58: 14, 59: 14, 60: 15, 61: 15, 62: 15, 63: 15, 64: 16, 65: 16, 66: 16, 67: 16, 68: 17, 69: 17, 70: 17, 71: 17, 72: 18, 73: 18, 74: 18, 75: 18, 76: 19, 77: 19, 78: 19, 79: 19, 80: 20, 81: 20, 82: 20, 83: 20, 84: 21, 85: 21, 86: 21, 87: 21, 88: 36, 89: 22, 90: 22, 91: 22, 92: 23, 93: 23, 94: 23, 95: 23, 96: 24, 97: 24, 98: 24, 99: 24, 100: 25, 101: 25, 102: 25, 103: 25, 104: 26, 105: 26, 106: 26, 107: 26, 108: 27, 109: 27, 110: 27, 111: 27, 112: 28, 113: 28, 114: 28, 115: 28, 116: 29, 117: 29, 118: 29, 119: 29, 120: 30, 121: 30, 122: 30, 123: 30, 124: 31, 125: 31, 126: 31, 127: 31, 128: 32, 129: 32, 130: 32, 131: 32, 132: 33, 133: 33, 134: 33, 135: 33, -1: -1}
-
 const NumTiles int = 136
 
-type Tiles []int
+func (tile Tile) Class() TileClass {
+	return TileClass(tile / 4)
+}
 
-func (tiles Tiles) String() string {
-	return ""
+type Tiles []Tile
+
+func (tiles *Tiles) String() string {
+	var s string
+	for _, tile := range *tiles {
+		//s += tile.String()
+		s += TileClassUTF[TileClassMap[tile]]
+	}
+	return s
 }
 
 type TileT struct {
-	tileId      int
-	tileClass   int
+	tileId      Tile
 	discardable bool
 	isRinshan   bool
 	isLast      bool
 	discardWind Wind
 }
 
-func newTile(tileId int) *TileT {
+func newTile(tileId Tile) *TileT {
 	return &TileT{
 		tileId:      tileId,
-		tileClass:   tileId / 4,
 		discardable: true,
 		isRinshan:   false,
 		isLast:      false,
@@ -38,7 +44,7 @@ func newTile(tileId int) *TileT {
 type MahjongTiles struct {
 	randP *rand.Rand
 
-	allTiles       map[int]*TileT
+	allTiles       map[Tile]*TileT
 	tiles          Tiles
 	kanNum         int
 	NumRemainTiles int
@@ -52,13 +58,13 @@ func NewMahjongTiles(randP *rand.Rand) *MahjongTiles {
 		randP = rand.New(rand.NewSource(1))
 	}
 	mahjongTiles := MahjongTiles{
-		allTiles: make(map[int]*TileT, NumTiles),
+		allTiles: make(map[Tile]*TileT, NumTiles),
 		tiles:    make(Tiles, NumTiles),
 		randP:    randP,
 	}
 	for i := 0; i < NumTiles; i++ {
-		mahjongTiles.allTiles[i] = newTile(i)
-		mahjongTiles.tiles[i] = i
+		mahjongTiles.allTiles[Tile(i)] = newTile(Tile(i))
+		mahjongTiles.tiles[i] = Tile(i)
 	}
 	return &mahjongTiles
 }
@@ -66,8 +72,8 @@ func NewMahjongTiles(randP *rand.Rand) *MahjongTiles {
 func (tiles *MahjongTiles) Reset() {
 
 	for i := 0; i < NumTiles; i++ {
-		tiles.allTiles[i] = newTile(i)
-		tiles.tiles[i] = i
+		tiles.allTiles[Tile(i)] = newTile(Tile(i))
+		tiles.tiles[i] = Tile(i)
 	}
 	tiles.randP.Shuffle(NumTiles, func(i, j int) {
 		tiles.tiles[i], tiles.tiles[j] = tiles.tiles[j], tiles.tiles[i]
@@ -80,10 +86,14 @@ func (tiles *MahjongTiles) Reset() {
 }
 
 func (tiles *MahjongTiles) Setup() map[Wind]Tiles {
-	tonTiles := tiles.tiles[0:13].Copy()
-	nanTiles := tiles.tiles[13:26].Copy()
-	shaaTiles := tiles.tiles[26:39].Copy()
-	peiTiles := tiles.tiles[39:52].Copy()
+	t := tiles.tiles[0:13]
+	tonTiles := t.Copy()
+	t = tiles.tiles[13:26]
+	nanTiles := t.Copy()
+	t = tiles.tiles[26:39]
+	shaaTiles := t.Copy()
+	t = tiles.tiles[39:52]
+	peiTiles := t.Copy()
 	return map[Wind]Tiles{
 		East:  tonTiles,
 		South: nanTiles,
@@ -92,7 +102,7 @@ func (tiles *MahjongTiles) Setup() map[Wind]Tiles {
 	}
 }
 
-func (tiles *MahjongTiles) DealTile(isRinshan bool) int {
+func (tiles *MahjongTiles) DealTile(isRinshan bool) Tile {
 	if tiles.NumRemainTiles <= 0 {
 		panic(errors.New("no more tiles"))
 	}
@@ -100,7 +110,7 @@ func (tiles *MahjongTiles) DealTile(isRinshan bool) int {
 		panic(errors.New("no more rinshan tiles"))
 	}
 	tiles.NumRemainTiles--
-	var tile int
+	var tile Tile
 	if isRinshan {
 		tile = tiles.tiles[tiles.rinshanPointer]
 		tiles.rinshanPointer--
@@ -120,7 +130,7 @@ func (tiles *MahjongTiles) DealTile(isRinshan bool) int {
 func (tiles *MahjongTiles) DoraIndicators() Tiles {
 	t := make(Tiles, 0, 5)
 	for i := 0; i < tiles.kanNum+1; i++ {
-		t = t.Append(tiles.tiles[130-2*i])
+		t.Append(tiles.tiles[130-2*i])
 	}
 	return t
 }
@@ -128,33 +138,34 @@ func (tiles *MahjongTiles) DoraIndicators() Tiles {
 func (tiles *MahjongTiles) UraDoraIndicators() Tiles {
 	t := make(Tiles, 0, 5)
 	for i := 0; i < tiles.kanNum+1; i++ {
-		t = t.Append(tiles.tiles[131-2*i])
+		t.Append(tiles.tiles[131-2*i])
 	}
 	return t
 }
 
-func (tiles *MahjongTiles) GetCurrentIndicator() int {
+func (tiles *MahjongTiles) GetCurrentIndicator() Tile {
 	return tiles.DoraIndicators()[tiles.kanNum]
 }
 
-func (tiles Tiles) Remove(tile int) Tiles {
-	for i := 0; i < len(tiles); i++ {
-		if tiles[i] == tile {
-			return append(tiles[:i], tiles[i+1:]...)
+func (tiles *Tiles) Remove(tile Tile) {
+	for i := 0; i < len(*tiles); i++ {
+		if (*tiles)[i] == tile {
+			*tiles = append((*tiles)[:i], (*tiles)[i+1:]...)
+			return
 		}
 	}
 	panic("tile" + string(rune(tile)) + "not in tiles")
 }
 
-func (tiles Tiles) Append(tile int) Tiles {
-	return append(tiles, tile)
+func (tiles *Tiles) Append(tile Tile) {
+	*tiles = append(*tiles, tile)
 }
 
 func TilesEqual(tiles1 Tiles, tiles2 Tiles) bool {
-	newArray1 := append([]int{}, tiles1...)
-	newArray2 := append([]int{}, tiles2...)
-	sort.Ints(newArray1)
-	sort.Ints(newArray2)
+	newArray1 := append(Tiles{}, tiles1...)
+	newArray2 := append(Tiles{}, tiles2...)
+	sort.Sort(&newArray1)
+	sort.Sort(&newArray2)
 	for i, tile := range newArray1 {
 		if TileClassMap[newArray2[i]] != TileClassMap[tile] {
 			return false
@@ -163,27 +174,124 @@ func TilesEqual(tiles1 Tiles, tiles2 Tiles) bool {
 	return true
 }
 
-func (tiles Tiles) Copy() Tiles {
-	tilesCopy := make(Tiles, len(tiles), cap(tiles))
-	copy(tilesCopy, tiles)
+func (tiles *Tiles) MarshalJSON() ([]byte, error) {
+	str := make([]string, len(*tiles))
+	for i, t := range *tiles {
+		str[i] = t.String()
+	}
+	return json.Marshal(str)
+}
+func (tiles *Tiles) UnmarshalJSON(data []byte) error {
+	var str []string
+	err := json.Unmarshal(data, &str)
+	if err != nil {
+		return err
+	}
+	*tiles = make(Tiles, len(str))
+	for i, t := range str {
+		(*tiles)[i] = MapStringToTile[t]
+	}
+	return nil
+}
+
+// Len sort.Interface
+func (tiles *Tiles) Len() int {
+	return len(*tiles)
+}
+
+// Less sort.Interface
+func (tiles *Tiles) Less(i, j int) bool {
+	return (*tiles)[i] < (*tiles)[j]
+}
+
+// Swap sort.Interface
+func (tiles *Tiles) Swap(i, j int) {
+	(*tiles)[i], (*tiles)[j] = (*tiles)[j], (*tiles)[i]
+}
+
+func (tiles *Tiles) Copy() Tiles {
+	tilesCopy := make(Tiles, len(*tiles), cap(*tiles))
+	copy(tilesCopy, *tiles)
 	return tilesCopy
 }
 
-func (tiles Tiles) Index(tileId int, startIdx int) int {
-	for i := startIdx; i < len(tiles); i++ {
-		if tiles[i] == tileId {
+func (tiles *Tiles) Index(tileId Tile, startIdx int) int {
+	for i := startIdx; i < len(*tiles); i++ {
+		if (*tiles)[i] == tileId {
 			return i
 		}
 	}
 	return -1
 }
 
-func (tiles Tiles) Count(tileId int) int {
+func (tiles *Tiles) Count(tileId Tile) int {
 	count := 0
-	for _, tile := range tiles {
+	for _, tile := range *tiles {
 		if tile == tileId {
 			count++
 		}
 	}
 	return count
+}
+
+type TileClasses []TileClass
+
+func (tileClasses *TileClasses) Append(tileClass TileClass) {
+	*tileClasses = append(*tileClasses, tileClass)
+}
+
+func (tileClasses *TileClasses) Remove(tileClass TileClass) {
+	for i := 0; i < len(*tileClasses); i++ {
+		if (*tileClasses)[i] == tileClass {
+			*tileClasses = append((*tileClasses)[:i], (*tileClasses)[i+1:]...)
+			return
+		}
+	}
+	panic("tileClass" + string(rune(tileClass)) + "not in tileClasses")
+}
+
+func (tileClasses *TileClasses) Index(tileClass TileClass, startIdx int) int {
+	for i := startIdx; i < len(*tileClasses); i++ {
+		if (*tileClasses)[i] == tileClass {
+			return i
+		}
+	}
+	return -1
+}
+
+func (tileClasses *TileClasses) Count(tileClass TileClass) int {
+	count := 0
+	for _, tileC := range *tileClasses {
+		if tileC == tileClass {
+			count++
+		}
+	}
+	return count
+}
+
+func (tileClasses *TileClasses) Copy() TileClasses {
+	tileClassesCopy := make(TileClasses, len(*tileClasses), cap(*tileClasses))
+	copy(tileClassesCopy, *tileClasses)
+	return tileClassesCopy
+}
+
+func (tileClasses *TileClasses) MarshalJSON() ([]byte, error) {
+	str := make([]string, len(*tileClasses))
+	for i, t := range *tileClasses {
+		str[i] = t.String()
+	}
+	return json.Marshal(str)
+}
+
+func (tileClasses *TileClasses) UnmarshalJSON(data []byte) error {
+	var str []string
+	err := json.Unmarshal(data, &str)
+	if err != nil {
+		return err
+	}
+	*tileClasses = make(TileClasses, len(str))
+	for i, t := range str {
+		(*tileClasses)[i] = MapStringToTileClass[t]
+	}
+	return nil
 }
