@@ -71,6 +71,49 @@ func (game *Game) GetPosEvents(pos Wind, startIndex int) Events {
 	return game.posEvents[pos][startIndex:]
 }
 
+func (game *Game) GetPosBoardState(pos Wind) (r *BoardState) {
+	r = &BoardState{
+		WindRound:      game.WindRound,
+		NumHonba:       game.NumHonba,
+		NumRiichi:      game.NumRiichi,
+		DoraIndicators: game.Tiles.DoraIndicators(),
+		PlayerWind:     pos,
+		Position:       game.Position,
+		HandTiles:      game.posPlayer[pos].HandTiles,
+		//ValidActions:   nil,
+		NumRemainTiles: game.Tiles.NumRemainTiles,
+		PlayerEast: PlayerState{
+			Points:         game.posPlayer[East].Points,
+			Melds:          game.posPlayer[East].Melds,
+			DiscardTiles:   game.posPlayer[East].DiscardTiles,
+			TilesTsumoGiri: game.posPlayer[East].TilesTsumoGiri,
+			IsRiichi:       game.posPlayer[East].IsRiichi,
+		},
+		PlayerSouth: PlayerState{
+			Points:         game.posPlayer[South].Points,
+			Melds:          game.posPlayer[South].Melds,
+			DiscardTiles:   game.posPlayer[South].DiscardTiles,
+			TilesTsumoGiri: game.posPlayer[South].TilesTsumoGiri,
+			IsRiichi:       game.posPlayer[South].IsRiichi,
+		},
+		PlayerWest: PlayerState{
+			Points:         game.posPlayer[West].Points,
+			Melds:          game.posPlayer[West].Melds,
+			DiscardTiles:   game.posPlayer[West].DiscardTiles,
+			TilesTsumoGiri: game.posPlayer[West].TilesTsumoGiri,
+			IsRiichi:       game.posPlayer[West].IsRiichi,
+		},
+		PlayerNorth: PlayerState{
+			Points:         game.posPlayer[North].Points,
+			Melds:          game.posPlayer[North].Melds,
+			DiscardTiles:   game.posPlayer[North].DiscardTiles,
+			TilesTsumoGiri: game.posPlayer[North].TilesTsumoGiri,
+			IsRiichi:       game.posPlayer[North].IsRiichi,
+		},
+	}
+	return r
+}
+
 func (game *Game) addPosEvent(posEvent map[Wind]Event) {
 	for pos, event := range posEvent {
 		game.posEvents[pos] = append(game.posEvents[pos], event)
@@ -81,7 +124,6 @@ func (game *Game) NewGameRound() {
 	game.NumGame += 1
 	game.Tiles.Reset()
 	game.Position = East
-	game.posEvents = map[Wind]Events{}
 	game.posPlayer[Wind((16-game.WindRound)%4)] = game.P0
 	game.posPlayer[Wind((17-game.WindRound)%4)] = game.P1
 	game.posPlayer[Wind((18-game.WindRound)%4)] = game.P2
@@ -93,7 +135,6 @@ func (game *Game) NewGameRound() {
 }
 
 func (game *Game) Reset(playerSlice []*Player) {
-	game.Tiles.Reset()
 	game.NumGame = -1
 	game.WindRound = WindRoundEast1
 	game.NumRiichi = 0

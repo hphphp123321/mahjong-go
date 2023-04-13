@@ -1,35 +1,35 @@
 package mahjong
 
+import "encoding/json"
+
 type BoardState struct {
-	RoundWind      int         `json:"round_wind"`
-	NumHonba       int         `json:"num_honba"`
-	NumRiichi      int         `json:"num_riichi"`
-	DoraIndicators Tiles       `json:"dora_indicators"`
-	PlayerWind     int         `json:"player_wind"`
-	Position       int         `json:"position"`
-	HandTiles      Tiles       `json:"hand_tiles"`
-	ValidActions   Calls       `json:"valid_actions"`
-	RealActionIdx  int         `json:"action_idx"`
+	WindRound      WindRound `json:"wind_round"`
+	NumHonba       int       `json:"num_honba"`
+	NumRiichi      int       `json:"num_riichi"`
+	DoraIndicators Tiles     `json:"dora_indicators"`
+	PlayerWind     Wind      `json:"player_wind"`
+	Position       Wind      `json:"position"`
+	HandTiles      Tiles     `json:"hand_tiles"`
+	ValidActions   Calls     `json:"valid_actions,omitempty"`
+	//RealActionIdx  int         `json:"action_idx"`
 	NumRemainTiles int         `json:"remain_tiles"`
-	P0             PlayerState `json:"0"`
-	P1             PlayerState `json:"1"`
-	P2             PlayerState `json:"2"`
-	P3             PlayerState `json:"3"`
+	PlayerEast     PlayerState `json:"player_east"`
+	PlayerSouth    PlayerState `json:"player_south"`
+	PlayerWest     PlayerState `json:"player_west"`
+	PlayerNorth    PlayerState `json:"player_north"`
 }
 
 type PlayerState struct {
-	Points         int   `json:"points"`
-	Melds          Calls `json:"melds"`
-	DiscardTiles   Tiles `json:"discards"`
-	TilesTsumoGiri []int `json:"tsumo_giri"`
-	IsRiichi       bool  `json:"riichi"`
-	PointsReward   int   `json:"p_reward"`
-	FinalReward    int   `json:"r_reward"`
+	Points         int    `json:"points"`
+	Melds          Calls  `json:"melds"`
+	DiscardTiles   Tiles  `json:"discards"`
+	TilesTsumoGiri []bool `json:"tsumo_giri"`
+	IsRiichi       bool   `json:"riichi"`
 }
 
 func NewBoardState() *BoardState {
 	return &BoardState{
-		RoundWind:      -1,
+		WindRound:      -1,
 		NumHonba:       -1,
 		NumRiichi:      -1,
 		DoraIndicators: nil,
@@ -37,18 +37,18 @@ func NewBoardState() *BoardState {
 		Position:       -1,
 		HandTiles:      nil,
 		ValidActions:   nil,
-		RealActionIdx:  -1,
+		//RealActionIdx:  -1,
 		NumRemainTiles: -1,
-		P0:             PlayerState{},
-		P1:             PlayerState{},
-		P2:             PlayerState{},
-		P3:             PlayerState{},
+		PlayerEast:     PlayerState{},
+		PlayerSouth:    PlayerState{},
+		PlayerWest:     PlayerState{},
+		PlayerNorth:    PlayerState{},
 	}
 }
 
 func BoardStateCopy(boardState *BoardState) *BoardState {
 	return &BoardState{
-		RoundWind:      boardState.RoundWind,
+		WindRound:      boardState.WindRound,
 		NumHonba:       boardState.NumHonba,
 		NumRiichi:      boardState.NumRiichi,
 		DoraIndicators: boardState.DoraIndicators,
@@ -56,11 +56,84 @@ func BoardStateCopy(boardState *BoardState) *BoardState {
 		Position:       boardState.Position,
 		HandTiles:      boardState.HandTiles[:],
 		ValidActions:   boardState.ValidActions[:],
-		RealActionIdx:  boardState.RealActionIdx,
+		//RealActionIdx:  boardState.RealActionIdx,
 		NumRemainTiles: boardState.NumRemainTiles,
-		P0:             boardState.P0,
-		P1:             boardState.P1,
-		P2:             boardState.P2,
-		P3:             boardState.P3,
+		PlayerEast:     boardState.PlayerEast,
+		PlayerSouth:    boardState.PlayerSouth,
+		PlayerWest:     boardState.PlayerWest,
+		PlayerNorth:    boardState.PlayerNorth,
 	}
+}
+
+func (b *BoardState) MarshalJson() ([]byte, error) {
+	return json.Marshal(
+		struct {
+			WindRound      string `json:"wind_round"`
+			NumHonba       int    `json:"num_honba"`
+			NumRiichi      int    `json:"num_riichi"`
+			DoraIndicators Tiles  `json:"dora_indicators"`
+			PlayerWind     Wind   `json:"player_wind"`
+			Position       Wind   `json:"position"`
+			HandTiles      Tiles  `json:"hand_tiles"`
+			ValidActions   Calls  `json:"valid_actions,omitempty"`
+			//RealActionIdx  int         `json:"action_idx"`
+			NumRemainTiles int         `json:"remain_tiles"`
+			PlayerEast     PlayerState `json:"player_east"`
+			PlayerSouth    PlayerState `json:"player_south"`
+			PlayerWest     PlayerState `json:"player_west"`
+			PlayerNorth    PlayerState `json:"player_north"`
+		}{
+			WindRound:      b.WindRound.String(),
+			NumHonba:       b.NumHonba,
+			NumRiichi:      b.NumRiichi,
+			DoraIndicators: b.DoraIndicators,
+			PlayerWind:     b.PlayerWind,
+			Position:       b.Position,
+			HandTiles:      b.HandTiles,
+			ValidActions:   b.ValidActions,
+			//RealActionIdx:  b.RealActionIdx,
+			NumRemainTiles: b.NumRemainTiles,
+			PlayerEast:     b.PlayerEast,
+			PlayerSouth:    b.PlayerSouth,
+			PlayerWest:     b.PlayerWest,
+			PlayerNorth:    b.PlayerNorth,
+		},
+	)
+}
+
+func (b *BoardState) UnmarshalJson(data []byte) error {
+	var tmp struct {
+		WindRound      string `json:"wind_round"`
+		NumHonba       int    `json:"num_honba"`
+		NumRiichi      int    `json:"num_riichi"`
+		DoraIndicators Tiles  `json:"dora_indicators"`
+		PlayerWind     Wind   `json:"player_wind"`
+		Position       Wind   `json:"position"`
+		HandTiles      Tiles  `json:"hand_tiles"`
+		ValidActions   Calls  `json:"valid_actions,omitempty"`
+		//RealActionIdx  int         `json:"action_idx"`
+		NumRemainTiles int         `json:"remain_tiles"`
+		PlayerEast     PlayerState `json:"player_east"`
+		PlayerSouth    PlayerState `json:"player_south"`
+		PlayerWest     PlayerState `json:"player_west"`
+		PlayerNorth    PlayerState `json:"player_north"`
+	}
+	if err := json.Unmarshal(data, &tmp); err != nil {
+		return err
+	}
+	b.WindRound = MapStringToWindRound[tmp.WindRound]
+	b.NumHonba = tmp.NumHonba
+	b.NumRiichi = tmp.NumRiichi
+	b.DoraIndicators = tmp.DoraIndicators
+	b.PlayerWind = tmp.PlayerWind
+	b.Position = tmp.Position
+	b.HandTiles = tmp.HandTiles
+	b.ValidActions = tmp.ValidActions
+	//b.RealActionIdx = tmp.RealActionIdx
+	b.NumRemainTiles = tmp.NumRemainTiles
+	b.PlayerEast = tmp.PlayerEast
+	b.PlayerSouth = tmp.PlayerSouth
+	b.PlayerWest = tmp.PlayerWest
+	b.PlayerNorth = tmp.PlayerNorth
+	return nil
 }
