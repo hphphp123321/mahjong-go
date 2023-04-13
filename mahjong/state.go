@@ -35,6 +35,7 @@ func (s *InitState) step() map[Wind]Calls {
 			NumHonba:  s.g.NumHonba,
 			NumRiichi: s.g.NumRiichi,
 			InitTiles: initTiles[wind],
+			Rule:      s.g.rule,
 		}
 	}
 	s.g.addPosEvent(posEvent)
@@ -554,7 +555,7 @@ func (s *EndState) step() map[Wind]Calls {
 		// ryuu kyoku
 		if s.posResults[East].RyuuKyokuReason == RyuuKyokuNormal {
 			tenhaiWinds := s.g.judgeTenHaiWinds()
-			if s.g.rule.NagashiMangan {
+			if s.g.rule.IsNagashiMangan {
 				// judge ryuu kyoku mangan
 				bSlice := s.g.judgeNagashiMangan()
 				if len(bSlice) != 0 {
@@ -611,7 +612,7 @@ func (s *EndState) step() map[Wind]Calls {
 
 	case 3:
 		// san cha ron
-		if !s.g.rule.SanChaHou {
+		if !s.g.rule.IsSanChaHou {
 			// san cha ron not allowed
 			// generate ryuu kyoku events
 			for wind := range s.g.posPlayer {
@@ -686,6 +687,7 @@ func (s *EndState) step() map[Wind]Calls {
 						Who:       wind,
 						HandTiles: s.g.posPlayer[wind].HandTiles,
 						WinTile:   result.RonCall.CallTiles[0],
+						Result:    result,
 					}
 				}
 				s.g.addPosEvent(posEvent)

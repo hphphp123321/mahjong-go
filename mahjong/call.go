@@ -13,6 +13,9 @@ type Call struct {
 func (call *Call) MarshalJSON() ([]byte, error) {
 	var callTilesFromWho []string
 	for _, w := range call.CallTilesFromWho {
+		if w == WindDummy {
+			continue
+		}
 		callTilesFromWho = append(callTilesFromWho, w.String())
 	}
 	return json.Marshal(&struct {
@@ -40,6 +43,12 @@ func (call *Call) UnmarshalJSON(data []byte) error {
 	call.CallType = MapStringToCallType[tmp.CallType]
 	for _, w := range tmp.CallTilesFromWho {
 		callTilesFromWho = append(callTilesFromWho, MapStringToWind[w])
+	}
+	for len(tmp.CallTiles) < 4 {
+		tmp.CallTiles = append(tmp.CallTiles, TileDummy)
+	}
+	for len(callTilesFromWho) < 4 {
+		callTilesFromWho = append(callTilesFromWho, WindDummy)
 	}
 	call.CallTiles = tmp.CallTiles
 	call.CallTilesFromWho = callTilesFromWho

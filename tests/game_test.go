@@ -36,7 +36,6 @@ func TestGame(t *testing.T) {
 			flag = game.Next(posCall)
 			posCall = make(map[mahjong.Wind]*mahjong.Call, 4)
 			events := game.GetPosEvents(players[0].Wind, eventIndex)
-
 			eventIndex += len(events)
 			if len(posCalls) == 4 {
 				eventIndex = 0

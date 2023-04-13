@@ -114,50 +114,6 @@ func (game *Game) Reset(playerSlice []*Player) {
 	game.posPlayer = map[Wind]*Player{0: playerSlice[0], 1: playerSlice[1], 2: playerSlice[2], 3: playerSlice[3]}
 }
 
-//func (game *Game) ProcessOtherCall(pMain *Player, call *Call) {
-//	switch call.CallType {
-//	case Skip:
-//		return
-//	case Chi:
-//		game.processChi(pMain, call)
-//		game.Position = pMain.Wind
-//		game.breakIppatsu()
-//		game.breakRyuukyoku()
-//	case Pon:
-//		game.processPon(pMain, call)
-//		game.Position = pMain.Wind
-//		game.breakIppatsu()
-//		game.breakRyuukyoku()
-//	case DaiMinKan:
-//		game.processDaiMinKan(pMain, call)
-//		game.Position = pMain.Wind
-//		game.breakIppatsu()
-//		game.breakRyuukyoku()
-//	default:
-//		panic("unknown call type")
-//	}
-//}
-
-//func (game *Game) ProcessSelfCall(pMain *Player, call *Call) {
-//	switch call.CallType {
-//	case Discard:
-//		game.DiscardTileProcess(pMain, call.CallTiles[0])
-//	case ShouMinKan:
-//		game.processShouMinKan(pMain, call)
-//		game.breakIppatsu()
-//		game.breakRyuukyoku()
-//	case AnKan:
-//		game.processAnKan(pMain, call)
-//		game.breakIppatsu()
-//		game.breakRyuukyoku()
-//	case Riichi:
-//		game.processRiichi(pMain, call)
-//		game.breakIppatsu()
-//	default:
-//		panic("unknown call type")
-//	}
-//}
-
 func (game *Game) GetTileProcess(pMain *Player, tileID Tile) {
 	if pMain.IsRiichi {
 		for _, tile := range pMain.HandTiles {
@@ -859,7 +815,7 @@ func (game *Game) getRonResult(pMain *Player, winTile Tile) (r *Result) {
 		RoundWind:   base.Wind(game.WindRound / 4),
 		DoraTiles:   IntsToTiles(IndicatorsToDora(game.Tiles.DoraIndicators())),
 		UraTiles:    IntsToTiles(IndicatorsToDora(game.Tiles.UraDoraIndicators())),
-		Rules:       game.rule.YakuRule,
+		Rules:       game.rule.YakuRule(),
 		IsTsumo:     pMain.IsTsumo,
 		IsRiichi:    pMain.IsRiichi,
 		IsIpatsu:    pMain.IsIppatsu,
@@ -873,11 +829,8 @@ func (game *Game) getRonResult(pMain *Player, winTile Tile) (r *Result) {
 	if yakuResult == nil {
 		return nil
 	}
-	scoreResult := score.GetScoreByResult(game.rule.ScoreRule, yakuResult, score.Honba(game.NumHonba))
-	return &Result{
-		YakuResult:  yakuResult,
-		ScoreResult: &scoreResult,
-	}
+	scoreResult := score.GetScoreByResult(game.rule.ScoreRule(), yakuResult, score.Honba(game.NumHonba))
+	return GenerateRonResult(yakuResult, &scoreResult)
 }
 
 func (game *Game) judgeSuuFonRenDa() bool {
@@ -1139,15 +1092,15 @@ func (game *Game) processRonResult(results map[Wind]*Result) {
 	})
 	for i, wind := range winds {
 		result := results[wind]
-		var pointsChange score.ScoreChanges
+		var pointsChange ScoreChanges
 		if i == 0 {
 			// the first player get riichi bonus
-			pointsChange = result.ScoreResult.GetChanges(base.Wind(wind), base.Wind(game.Position), score.RiichiSticks(game.NumRiichi))
+			pointsChange = result.ScoreResult.GetChanges(wind, game.Position, game.NumRiichi)
 		} else {
-			pointsChange = result.ScoreResult.GetChanges(base.Wind(wind), base.Wind(game.Position), 0)
+			pointsChange = result.ScoreResult.GetChanges(wind, game.Position, 0)
 		}
-		game.posPlayer[wind].Points += int(pointsChange.TotalWin())
-		totalPoints += int(pointsChange.TotalPayed())
+		game.posPlayer[wind].Points += pointsChange.TotalWin()
+		totalPoints += pointsChange.TotalPayed()
 	}
 	game.posPlayer[game.Position].Points -= totalPoints
 }
@@ -1164,6 +1117,7 @@ func (game *Game) addRonEvents(results map[Wind]*Result) {
 					Who:       wind,
 					HandTiles: game.posPlayer[wind].HandTiles,
 					WinTile:   result.RonCall.CallTiles[0],
+					Result:    result,
 				}
 			}
 		} else {
@@ -1173,6 +1127,7 @@ func (game *Game) addRonEvents(results map[Wind]*Result) {
 					Who:       wind,
 					HandTiles: game.posPlayer[wind].HandTiles,
 					WinTile:   result.RonCall.CallTiles[0],
+					Result:    result,
 				}
 			}
 		}
@@ -1188,7 +1143,7 @@ func (game *Game) processTsumoResult(wind Wind, result *Result) {
 			otherWinds = append(otherWinds[:i], otherWinds[i+1:]...)
 		}
 	}
-	pointsChange := result.ScoreResult.GetChanges(base.Wind(wind), base.Wind(wind), score.RiichiSticks(game.NumRiichi))
+	pointsChange := result.ScoreResult.GetChanges(wind, wind, game.NumRiichi)
 	game.posPlayer[wind].Points += int(pointsChange.TotalWin())
 	if wind == East {
 		// dealer tsumo

@@ -175,9 +175,12 @@ func TilesEqual(tiles1 Tiles, tiles2 Tiles) bool {
 }
 
 func (tiles *Tiles) MarshalJSON() ([]byte, error) {
-	str := make([]string, len(*tiles))
-	for i, t := range *tiles {
-		str[i] = t.String()
+	str := make([]string, 0)
+	for _, t := range *tiles {
+		if t == TileDummy {
+			continue
+		}
+		str = append(str, t.String())
 	}
 	return json.Marshal(str)
 }
@@ -187,9 +190,9 @@ func (tiles *Tiles) UnmarshalJSON(data []byte) error {
 	if err != nil {
 		return err
 	}
-	*tiles = make(Tiles, len(str))
-	for i, t := range str {
-		(*tiles)[i] = MapStringToTile[t]
+	*tiles = make(Tiles, 0)
+	for _, t := range str {
+		*tiles = append(*tiles, MapStringToTile[t])
 	}
 	return nil
 }

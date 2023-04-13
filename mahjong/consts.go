@@ -375,3 +375,24 @@ var TileClassUTF = map[TileClass]string{
 }
 
 var ErrGameEnd = errors.New("game is end")
+
+// Limit numbers are now fixed and should not be changed
+type Limit int
+
+//go:generate stringer -type=Limit
+const (
+	LimitNone      Limit = 0
+	LimitMangan    Limit = 1
+	LimitHaneman   Limit = 2
+	LimitBaiman    Limit = 3
+	LimitSanbaiman Limit = 4
+	LimitYakuman   Limit = 5
+)
+
+var MapStringToLimit = func() map[string]Limit {
+	m := make(map[string]Limit)
+	for i := LimitNone; i <= LimitYakuman; i++ {
+		m[i.String()] = i
+	}
+	return m
+}()
