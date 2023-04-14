@@ -104,7 +104,7 @@ func (player *Player) IsFuriten() bool {
 }
 
 func (player *Player) ResetForRound() {
-	player.Wind = -1
+	player.Wind = WindDummy
 	player.JunNum = 0
 	player.KanNum = 0
 	player.HandTiles = make(Tiles, 0, 14)

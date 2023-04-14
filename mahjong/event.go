@@ -35,6 +35,7 @@ var eventTypes = map[string]reflect.Type{
 	EventTypeFuriten.String():       reflect.TypeOf(EventFuriten{}),
 	EventTypeNagashiMangan.String(): reflect.TypeOf(EventNagashiMangan{}),
 	EventTypeTenhaiEnd.String():     reflect.TypeOf(EventTenhaiEnd{}),
+	EventTypeGlobalInit.String():    reflect.TypeOf(EventGlobalInit{}),
 	// ... 添加其他事件类型
 }
 
@@ -629,6 +630,80 @@ func (event *EventRyuuKyoku) UnmarshalJSON(data []byte) error {
 	event.Who = who
 	event.Reason = reason
 	event.HandTiles = tmp.HandTiles
+	return nil
+}
+
+type EventGlobalInit struct {
+	AllTiles   Tiles        `json:"all_tiles"`
+	WindRound  WindRound    `json:"windRound"`
+	Seed       int64        `json:"seed"`
+	NumGame    int          `json:"numGame"`
+	NumHonba   int          `json:"numHonba"`
+	NumRiichi  int          `json:"numRiichi"`
+	Rule       *Rule        `json:"rule"`
+	InitPoints map[Wind]int `json:"init_points"`
+}
+
+func (event *EventGlobalInit) GetType() EventType {
+	return EventTypeGlobalInit
+}
+
+func (event *EventGlobalInit) MarshalJSON() ([]byte, error) {
+	return json.Marshal(&struct {
+		AllTiles   Tiles          `json:"all_tiles"`
+		WindRound  string         `json:"windRound"`
+		Seed       int64          `json:"seed"`
+		NumGame    int            `json:"numGame"`
+		NumHonba   int            `json:"numHonba"`
+		NumRiichi  int            `json:"numRiichi"`
+		Rule       *Rule          `json:"rule"`
+		InitPoints map[string]int `json:"init_points"`
+	}{
+		AllTiles:  event.AllTiles,
+		WindRound: event.WindRound.String(),
+		Seed:      event.Seed,
+		NumGame:   event.NumGame,
+		NumHonba:  event.NumHonba,
+		NumRiichi: event.NumRiichi,
+		Rule:      event.Rule,
+		InitPoints: func() map[string]int {
+			m := make(map[string]int)
+			for k, v := range event.InitPoints {
+				m[k.String()] = v
+			}
+			return m
+		}(),
+	})
+}
+
+func (event *EventGlobalInit) UnmarshalJSON(data []byte) error {
+	var tmp struct {
+		AllTiles   Tiles          `json:"all_tiles"`
+		WindRound  string         `json:"windRound"`
+		Seed       int64          `json:"seed"`
+		NumGame    int            `json:"numGame"`
+		NumHonba   int            `json:"numHonba"`
+		NumRiichi  int            `json:"numRiichi"`
+		Rule       *Rule          `json:"rule"`
+		InitPoints map[string]int `json:"init_points"`
+	}
+	if err := json.Unmarshal(data, &tmp); err != nil {
+		return err
+	}
+	event.AllTiles = tmp.AllTiles
+	event.WindRound = MapStringToWindRound[tmp.WindRound]
+	event.Seed = tmp.Seed
+	event.NumGame = tmp.NumGame
+	event.NumHonba = tmp.NumHonba
+	event.NumRiichi = tmp.NumRiichi
+	event.Rule = tmp.Rule
+	event.InitPoints = func() map[Wind]int {
+		m := make(map[Wind]int)
+		for k, v := range tmp.InitPoints {
+			m[MapStringToWind[k]] = v
+		}
+		return m
+	}()
 	return nil
 }
 

@@ -13,18 +13,19 @@ type gameState interface {
 }
 
 type InitState struct {
-	g *Game
+	g     *Game
+	tiles Tiles
 }
 
 func (s *InitState) step() map[Wind]Calls {
 	s.g.NewGameRound()
 
-	initTiles := s.g.Tiles.Setup()
+	initTiles := s.g.Tiles.Setup(s.tiles)
 
 	// generate event
 	var posEvent = make(map[Wind]Event)
 	for wind, player := range s.g.posPlayer {
-		player.HandTiles = initTiles[wind]
+		player.HandTiles = append(player.HandTiles, initTiles[wind]...)
 		sort.Sort(&player.HandTiles)
 		player.Wind = wind
 		posEvent[wind] = &EventStart{
@@ -154,6 +155,7 @@ func (s *DealState) next(posCalls map[Wind]*Call) error {
 		}
 	case Riichi:
 		s.g.processRiichiStep1(pMain, call)
+		s.g.breakIppatsu()
 		// generate riichi event
 		var posEvent = make(map[Wind]Event)
 		for wind := range s.g.posPlayer {
@@ -300,7 +302,7 @@ func (s *DiscardState) next(posCalls map[Wind]*Call) error {
 	}
 
 	// if there are calls, then process it
-	var maxCallType CallType = -1
+	var maxCallType = Skip
 	for _, call := range posCalls {
 		if call.CallType > maxCallType {
 			maxCallType = call.CallType
@@ -347,8 +349,6 @@ func (s *DiscardState) next(posCalls map[Wind]*Call) error {
 				break
 			}
 		}
-		player := s.g.posPlayer[wind]
-		s.g.Position = wind
 		if pMain.RiichiStep == 1 {
 			var posEvent map[Wind]Event
 			s.g.processRiichiStep2(pMain)
@@ -362,12 +362,27 @@ func (s *DiscardState) next(posCalls map[Wind]*Call) error {
 			}
 			s.g.addPosEvent(posEvent)
 		}
+		// if max call is skip, then next player deal
+		if maxCallType == Skip {
+			s.g.Position = (s.g.Position + 1) % 4
+			s.g.State = &DealState{
+				g:           s.g,
+				dealRinshan: false,
+			}
+			return nil
+		}
+		player := s.g.posPlayer[wind]
+		s.g.Position = wind
 		switch call.CallType {
 		case Chi, Pon:
 			if call.CallType == Chi {
 				s.g.processChi(player, call)
+				s.g.breakIppatsu()
+				s.g.breakRyuukyoku()
 			} else {
 				s.g.processPon(player, call)
+				s.g.breakIppatsu()
+				s.g.breakRyuukyoku()
 			}
 			s.g.State = &ChiPonState{
 				g:    s.g,
@@ -375,15 +390,11 @@ func (s *DiscardState) next(posCalls map[Wind]*Call) error {
 			}
 		case DaiMinKan:
 			s.g.processDaiMinKan(player, call)
+			s.g.breakIppatsu()
+			s.g.breakRyuukyoku()
 			s.g.State = &KanState{
 				g:    s.g,
 				call: call,
-			}
-		case Skip:
-			s.g.Position = (s.g.Position + 1) % 4
-			s.g.State = &DealState{
-				g:           s.g,
-				dealRinshan: false,
 			}
 		default:
 			return errors.New("unknown call type")
@@ -593,13 +604,16 @@ func (s *EndState) step() map[Wind]Calls {
 
 			if !common.Contain(tenhaiWinds, East) {
 				// east not ten hai
-				s.g.WindRound++
+				s.g.nextRound = true
+				//s.g.WindRound++
 			}
-			s.g.NumHonba++
+			s.g.honbaPlus = true
+			//s.g.NumHonba++
 
 		} else {
 			// process special ryuu kyoku
-			s.g.NumHonba++
+			s.g.honbaPlus = true
+			//s.g.NumHonba++
 		}
 		for wind, result := range s.posResults {
 			posEvent[wind] = &EventRyuuKyoku{
@@ -626,9 +640,11 @@ func (s *EndState) step() map[Wind]Calls {
 
 			_, ok := s.posResults[East]
 			if !ok {
-				s.g.WindRound++
+				s.g.nextRound = true
+				//s.g.WindRound++
 			}
-			s.g.NumHonba++
+			s.g.honbaPlus = true
+			//s.g.NumHonba++
 		} else {
 			s.g.processRonResult(s.posResults)
 			// generate san cha ron events
@@ -636,9 +652,11 @@ func (s *EndState) step() map[Wind]Calls {
 
 			_, ok := s.posResults[East]
 			if ok {
-				s.g.NumHonba++
+				s.g.honbaPlus = true
+				//s.g.NumHonba++
 			} else {
-				s.g.WindRound++
+				s.g.nextRound = true
+				//s.g.WindRound++
 			}
 		}
 
@@ -668,9 +686,11 @@ func (s *EndState) step() map[Wind]Calls {
 			posEvent = make(map[Wind]Event)
 
 			if wind != East {
-				s.g.WindRound++
+				s.g.nextRound = true
+				//s.g.WindRound++
 			}
-			s.g.NumHonba++
+			s.g.honbaPlus = true
+			//s.g.NumHonba++
 		} else {
 			if result.RonCall.CallType != Tsumo {
 				s.g.processRonResult(s.posResults)
@@ -694,9 +714,11 @@ func (s *EndState) step() map[Wind]Calls {
 				posEvent = make(map[Wind]Event)
 
 				if wind == East {
-					s.g.NumHonba++
+					s.g.honbaPlus = true
+					//s.g.NumHonba++
 				} else {
-					s.g.WindRound++
+					s.g.nextRound = true
+					//s.g.WindRound++
 				}
 			}
 		}

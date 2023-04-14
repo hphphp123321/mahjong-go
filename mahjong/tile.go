@@ -85,7 +85,19 @@ func (tiles *MahjongTiles) Reset() {
 	tiles.rinshanPointer = 135
 }
 
-func (tiles *MahjongTiles) Setup() map[Wind]Tiles {
+// Setup
+//
+//	@Description: setup tiles for each player
+//	@receiver tiles
+//	@param ts: prepared tiles, len must be 136, nil for default random tiles
+//	@return map[Wind]Tiles
+func (tiles *MahjongTiles) Setup(ts Tiles) map[Wind]Tiles {
+	if ts != nil {
+		if len(ts) != NumTiles {
+			panic(errors.New("len of prepared tiles must be 136"))
+		}
+		tiles.tiles = ts
+	}
 	t := tiles.tiles[0:13]
 	tonTiles := t.Copy()
 	t = tiles.tiles[13:26]

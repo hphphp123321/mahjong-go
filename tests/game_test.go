@@ -24,7 +24,7 @@ func TestOneGame(t *testing.T) {
 	r := rand.New(rand.NewSource(seed))
 
 	//println(i)
-	game.Reset(players)
+	game.Reset(players, nil)
 	flag = true
 	eventIndex := 0
 	for flag {
@@ -55,7 +55,44 @@ func TestOneGame(t *testing.T) {
 		fmt.Println("error:", err)
 	}
 	//fmt.Println(string(b))
+}
 
+func TestConstruct(t *testing.T) {
+	var seed int64 = 17
+	players := make([]*mahjong.Player, 4)
+	for i := 0; i < 4; i++ {
+		players[i] = mahjong.NewMahjongPlayer()
+	}
+	game := mahjong.NewMahjongGame(players, seed, nil)
+	game.Reset(players, nil)
+	flag := true
+	posCall := make(map[mahjong.Wind]*mahjong.Call, 4)
+	r := rand.New(rand.NewSource(seed))
+
+	for flag {
+		posCalls := game.Step()
+		for wind, calls := range posCalls {
+			posCall[wind] = calls[r.Intn(len(calls))]
+		}
+		flag = game.Next(posCall)
+		posCall = make(map[mahjong.Wind]*mahjong.Call, 4)
+
+		events := game.GetGlobalEvents()
+		if len(events) > 1 {
+			//b, _ := json.Marshal(&events)
+			//fmt.Println(string(b))
+			pSlice := make([]*mahjong.Player, 4)
+			for i := 0; i < 4; i++ {
+				pSlice[i] = mahjong.NewMahjongPlayer()
+			}
+			cGame := mahjong.ReConstructGame(pSlice, events)
+			fmt.Println("re:   " + cGame.State.String())
+			//fmt.Println("game: " + game.State.String())
+		}
+		if len(posCalls) == 4 {
+			fmt.Println("next round")
+		}
+	}
 }
 
 func TestGame(t *testing.T) {
@@ -75,7 +112,7 @@ func TestGame(t *testing.T) {
 
 	for i := 0; i < 100000; i++ {
 		//println(i)
-		game.Reset(players)
+		game.Reset(players, nil)
 		flag = true
 		eventIndex := 0
 		for flag {
@@ -88,12 +125,14 @@ func TestGame(t *testing.T) {
 			events := game.GetPosEvents(players[0].Wind, eventIndex)
 			eventIndex += len(events)
 			if len(posCalls) == 4 {
-				if events[0].GetType() == mahjong.EventTypeTsumo ||
-					events[0].GetType() == mahjong.EventTypeRon ||
-					events[0].GetType() == mahjong.EventTypeChanKan {
-					b, _ := json.Marshal(&events)
-					fmt.Println(string(b))
-				}
+				eventIndex = 0
+				events = game.GetGlobalEvents()
+				//if events[0].GetType() == mahjong.EventTypeTsumo ||
+				//	events[0].GetType() == mahjong.EventTypeRon ||
+				//	events[0].GetType() == mahjong.EventTypeChanKan {
+				b, _ := json.Marshal(&events)
+				fmt.Println(string(b))
+				//}
 			}
 		}
 	}

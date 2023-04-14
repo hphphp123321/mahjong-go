@@ -103,11 +103,12 @@ const (
 	EventTypeFuriten
 	EventTypeNagashiMangan
 	EventTypeTenhaiEnd
+	EventTypeGlobalInit
 )
 
 var MapStringToEventType = func() map[string]EventType {
 	m := make(map[string]EventType)
-	for i := EventTypeGet; i <= EventTypeTenhaiEnd; i++ {
+	for i := EventTypeGet; i <= EventTypeGlobalInit; i++ {
 		m[i.String()] = i
 	}
 	return m

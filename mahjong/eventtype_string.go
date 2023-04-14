@@ -27,11 +27,12 @@ func _() {
 	_ = x[EventTypeFuriten-15]
 	_ = x[EventTypeNagashiMangan-16]
 	_ = x[EventTypeTenhaiEnd-17]
+	_ = x[EventTypeGlobalInit-18]
 }
 
-const _EventType_name = "EventTypeGetEventTypeTsumoGiriEventTypeDiscardEventTypeChiEventTypePonEventTypeDaiMinKanEventTypeShouMinKanEventTypeAnKanEventTypeRiichiEventTypeRonEventTypeTsumoEventTypeNewIndicatorEventTypeChanKanEventTypeRyuuKyokuEventTypeStartEventTypeEndEventTypeFuritenEventTypeNagashiManganEventTypeTenhaiEnd"
+const _EventType_name = "EventTypeGetEventTypeTsumoGiriEventTypeDiscardEventTypeChiEventTypePonEventTypeDaiMinKanEventTypeShouMinKanEventTypeAnKanEventTypeRiichiEventTypeRonEventTypeTsumoEventTypeNewIndicatorEventTypeChanKanEventTypeRyuuKyokuEventTypeStartEventTypeEndEventTypeFuritenEventTypeNagashiManganEventTypeTenhaiEndEventTypeGlobalInit"
 
-var _EventType_index = [...]uint16{0, 12, 30, 46, 58, 70, 88, 107, 121, 136, 148, 162, 183, 199, 217, 231, 243, 259, 281, 299}
+var _EventType_index = [...]uint16{0, 12, 30, 46, 58, 70, 88, 107, 121, 136, 148, 162, 183, 199, 217, 231, 243, 259, 281, 299, 318}
 
 func (i EventType) String() string {
 	i -= -1

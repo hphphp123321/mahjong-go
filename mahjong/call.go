@@ -89,7 +89,7 @@ func (calls *Calls) Index(call *Call) int {
 			return idx
 		}
 	}
-	panic("call not in calls!")
+	return -1
 }
 
 func (calls *Calls) Copy() Calls {
@@ -105,4 +105,10 @@ func (calls *Calls) Append(call *Call) {
 func (calls *Calls) Remove(call *Call) {
 	idx := calls.Index(call)
 	*calls = append((*calls)[:idx], (*calls)[idx+1:]...)
+}
+
+var SkipCall = &Call{
+	CallType:         Skip,
+	CallTiles:        Tiles{TileDummy, TileDummy, TileDummy, TileDummy},
+	CallTilesFromWho: []Wind{WindDummy, WindDummy, WindDummy, WindDummy},
 }
