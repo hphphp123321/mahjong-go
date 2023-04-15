@@ -1,4 +1,4 @@
-# mahjong-go [![Apache V2 License](https://img.shields.io/badge/license-Apache%20V2-blue.svg)]()
+# mahjong-go [![Apache V2 License](https://img.shields.io/badge/license-Apache%20V2-blue.svg)](LICENSE)
 
 [English](README.md) | 中文
 
@@ -51,8 +51,8 @@ func main() {
 
 ## 示例
 在tests目录下有一些使用mahjong-go的例子可以作为参考。
-- [game_test.go](https://github.com/hphphp123321/mahjong-go/tests/game_test.go): 简单的使用例子，其中包括一局游戏和多局游戏的测试。
-- [boardstate_test.go](https://github.com/hphphp123321/mahjong-go/tests/boardstate_test.go): 把游戏的某个状态给转变为[BoardState](https://github.com/hphphp123321/mahjong-go/mahjong/boardstate.go)结构体的例子，可以用于将游戏状态快速转变为某个玩家能够看到的所有信息。
+- [game_test.go](tests/game_test.go): 简单的使用例子，其中包括一局游戏和多局游戏的测试。
+- [boardstate_test.go](tests/boardstate_test.go): 把游戏的某个状态给转变为[BoardState](https://github.com/hphphp123321/mahjong-go/mahjong/boardstate.go)结构体的例子，可以用于将游戏状态快速转变为某个玩家能够看到的所有信息。
 - [reconstruct_test.go](tests/reconstruct_test.go): 通过将游戏的所有事件进行复原，还原出游戏的状态的例子，可以用于录像回放。
 - [rule_test.go](tests/rule_test.go): 自定义麻将规则的例子，可以用于一些特殊的麻将规则。
 
@@ -61,3 +61,4 @@ func main() {
 - [go文档](https://pkg.go.dev/github.com/hphphp123321/mahjong-go)
 
 ## 许可证
+mahjong-go基于Apache V2许可证发布，详情请参考[LICENSE](LICENSE)文件。
