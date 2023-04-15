@@ -27,9 +27,11 @@ package main
 
 import (
 	"github.com/hphphp123321/mahjong-go/mahjong"
+	"math/rand"
 )
 
 func main() {
+	var seed int64 = 1
 	players := make([]*mahjong.Player, 4)
 	posCalls := make(map[mahjong.Wind]mahjong.Calls, 4)
 	posCall := make(map[mahjong.Wind]*mahjong.Call, 4)
