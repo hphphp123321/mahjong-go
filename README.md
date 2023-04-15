@@ -1,6 +1,6 @@
 # mahjong-go [![Apache V2 License](https://img.shields.io/badge/license-Apache%20V2-blue.svg)](LICENSE)
 
-[English](README.md) | 中文
+English | [中文](README-CN.md)
 
 mahjong-go is a Riichi Mahjong game logic package implemented in Go, based on the [tempai-core](https://github.com/dnovikoff/tempai-core) tenpai, winning hand, and other algorithms to implement the basic logic of four-player Riichi Mahjong. It includes:
 1. Basic logic for a four-player Mahjong game, including dealing, chi, pon, kan, and winning hands
