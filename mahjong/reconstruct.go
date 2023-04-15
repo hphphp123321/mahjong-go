@@ -1,6 +1,8 @@
 package mahjong
 
-import "errors"
+import (
+	"errors"
+)
 
 func ReConstructGame(playerSlice []*Player, globalEvents Events) *Game {
 	game := &Game{}
@@ -116,11 +118,16 @@ func ReConstructGame(playerSlice []*Player, globalEvents Events) *Game {
 			}
 		case EventTypeChi:
 			who := event.(*EventChi).Who
-			calls := posCalls[who]
-			for _, call := range calls {
-				if CallEqual(call, event.(*EventChi).Call) {
-					posCall[who] = call
-					break
+			for wind, calls := range posCalls {
+				if wind == who {
+					for _, call := range calls {
+						if CallEqual(call, event.(*EventChi).Call) {
+							posCall[who] = call
+							break
+						}
+					}
+				} else {
+					posCall[wind] = SkipCall
 				}
 			}
 		case EventTypePon:

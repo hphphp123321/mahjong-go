@@ -578,7 +578,11 @@ func (game *Game) judgeRiichi(pMain *Player) Calls {
 func (game *Game) judgeChi(pMain *Player, tileID Tile) Calls {
 	discardWind := game.Tiles.allTiles[tileID].discardWind
 	chiClass := tileID.Class()
-	if pMain.IsRiichi || (pMain.Wind-discardWind+4)%4 != 1 || chiClass >= 27 || game.Tiles.allTiles[tileID].isLast {
+	if pMain.IsRiichi ||
+		(pMain.Wind-discardWind+4)%4 != 1 ||
+		chiClass >= 27 ||
+		game.Tiles.allTiles[tileID].isLast ||
+		game.GetNumRemainTiles() == 0 {
 		return make(Calls, 0)
 	}
 	handTilesClass := pMain.GetHandTilesClass()
@@ -696,7 +700,7 @@ func (game *Game) judgePon(pMain *Player, tileID Tile) Calls {
 	ponClass := tileID.Class()
 	tilesClass := pMain.GetHandTilesClass()
 	tileCount := tilesClass.Count(ponClass)
-	if tileCount < 2 || game.Tiles.allTiles[tileID].isLast {
+	if tileCount < 2 || game.Tiles.allTiles[tileID].isLast || game.GetNumRemainTiles() == 0 {
 		return make(Calls, 0)
 	}
 	var posCalls Calls
@@ -744,7 +748,7 @@ func (game *Game) judgePon(pMain *Player, tileID Tile) Calls {
 
 func (game *Game) judgeDaiMinKan(pMain *Player, tileID Tile) Calls {
 	discardWind := game.Tiles.allTiles[tileID].discardWind
-	if pMain.IsRiichi || game.Tiles.allTiles[tileID].isLast || game.Tiles.NumRemainTiles == 0 {
+	if pMain.IsRiichi || game.Tiles.allTiles[tileID].isLast || game.GetNumRemainTiles() == 0 {
 		return make(Calls, 0)
 	}
 	kanClass := tileID.Class()
@@ -774,7 +778,7 @@ func (game *Game) judgeDaiMinKan(pMain *Player, tileID Tile) Calls {
 }
 
 func (game *Game) judgeAnKan(pMain *Player) Calls {
-	if len(pMain.HandTiles) == 2 || game.Tiles.NumRemainTiles == 0 {
+	if len(pMain.HandTiles) == 2 || game.GetNumRemainTiles() == 0 {
 		return make(Calls, 0)
 	}
 	tilesClass := pMain.GetHandTilesClass()
@@ -820,7 +824,7 @@ func (game *Game) judgeAnKan(pMain *Player) Calls {
 }
 
 func (game *Game) judgeShouMinKan(pMain *Player) Calls {
-	if len(pMain.Melds) == 0 || game.Tiles.NumRemainTiles == 0 {
+	if len(pMain.Melds) == 0 || game.GetNumRemainTiles() == 0 {
 		return make(Calls, 0)
 	}
 	var posCalls Calls

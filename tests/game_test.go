@@ -57,7 +57,7 @@ func TestOneGame(t *testing.T) {
 	//fmt.Println(string(b))
 }
 
-func TestConstruct(t *testing.T) {
+func TestReConstruct(t *testing.T) {
 	var seed int64 = 17
 	players := make([]*mahjong.Player, 4)
 	for i := 0; i < 4; i++ {
@@ -85,8 +85,11 @@ func TestConstruct(t *testing.T) {
 			for i := 0; i < 4; i++ {
 				pSlice[i] = mahjong.NewMahjongPlayer()
 			}
+			if len(events) == 154 {
+				fmt.Println(123)
+			}
 			cGame := mahjong.ReConstructGame(pSlice, events)
-			fmt.Println("re:   " + cGame.State.String())
+			fmt.Println("re:   " + cGame.State.String() + " player: " + cGame.Position.String())
 			//fmt.Println("game: " + game.State.String())
 		}
 		if len(posCalls) == 4 {
@@ -95,8 +98,7 @@ func TestConstruct(t *testing.T) {
 	}
 }
 
-func TestGame(t *testing.T) {
-	// TODO
+func TestMultiGames(t *testing.T) {
 	var seed int64 = 14
 
 	players := make([]*mahjong.Player, 4)
