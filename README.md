@@ -26,7 +26,7 @@ Here is a simple example:
 package main
 
 import (
-	mahjong "github.com/hphphp123321/mahjong-go"
+	"github.com/hphphp123321/mahjong-go/mahjong"
 )
 
 func main() {

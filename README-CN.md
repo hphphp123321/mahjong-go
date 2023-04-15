@@ -26,7 +26,7 @@ go get github.com/hphphp123321/mahjong-go
 package main
 
 import (
-	mahjong "github.com/hphphp123321/mahjong-go"
+	"github.com/hphphp123321/mahjong-go/mahjong"
 )
 
 func main() {
