@@ -65,15 +65,15 @@ func BoardStateCopy(boardState *BoardState) *BoardState {
 	}
 }
 
-func (b *BoardState) MarshalJson() ([]byte, error) {
+func (b *BoardState) MarshalJSON() ([]byte, error) {
 	return json.Marshal(
-		struct {
+		&struct {
 			WindRound      string `json:"wind_round"`
 			NumHonba       int    `json:"num_honba"`
 			NumRiichi      int    `json:"num_riichi"`
 			DoraIndicators Tiles  `json:"dora_indicators"`
-			PlayerWind     Wind   `json:"player_wind"`
-			Position       Wind   `json:"position"`
+			PlayerWind     string `json:"player_wind"`
+			Position       string `json:"position"`
 			HandTiles      Tiles  `json:"hand_tiles"`
 			ValidActions   Calls  `json:"valid_actions,omitempty"`
 			//RealActionIdx  int         `json:"action_idx"`
@@ -87,8 +87,8 @@ func (b *BoardState) MarshalJson() ([]byte, error) {
 			NumHonba:       b.NumHonba,
 			NumRiichi:      b.NumRiichi,
 			DoraIndicators: b.DoraIndicators,
-			PlayerWind:     b.PlayerWind,
-			Position:       b.Position,
+			PlayerWind:     b.PlayerWind.String(),
+			Position:       b.Position.String(),
 			HandTiles:      b.HandTiles,
 			ValidActions:   b.ValidActions,
 			//RealActionIdx:  b.RealActionIdx,
@@ -101,14 +101,14 @@ func (b *BoardState) MarshalJson() ([]byte, error) {
 	)
 }
 
-func (b *BoardState) UnmarshalJson(data []byte) error {
+func (b *BoardState) UnmarshalJSON(data []byte) error {
 	var tmp struct {
 		WindRound      string `json:"wind_round"`
 		NumHonba       int    `json:"num_honba"`
 		NumRiichi      int    `json:"num_riichi"`
 		DoraIndicators Tiles  `json:"dora_indicators"`
-		PlayerWind     Wind   `json:"player_wind"`
-		Position       Wind   `json:"position"`
+		PlayerWind     string `json:"player_wind"`
+		Position       string `json:"position"`
 		HandTiles      Tiles  `json:"hand_tiles"`
 		ValidActions   Calls  `json:"valid_actions,omitempty"`
 		//RealActionIdx  int         `json:"action_idx"`
@@ -125,8 +125,8 @@ func (b *BoardState) UnmarshalJson(data []byte) error {
 	b.NumHonba = tmp.NumHonba
 	b.NumRiichi = tmp.NumRiichi
 	b.DoraIndicators = tmp.DoraIndicators
-	b.PlayerWind = tmp.PlayerWind
-	b.Position = tmp.Position
+	b.PlayerWind = MapStringToWind[tmp.PlayerWind]
+	b.Position = MapStringToWind[tmp.Position]
 	b.HandTiles = tmp.HandTiles
 	b.ValidActions = tmp.ValidActions
 	//b.RealActionIdx = tmp.RealActionIdx

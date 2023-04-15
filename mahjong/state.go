@@ -18,25 +18,25 @@ type InitState struct {
 }
 
 func (s *InitState) step() map[Wind]Calls {
-	s.g.NewGameRound()
+	s.g.newGameRound()
 
 	initTiles := s.g.Tiles.Setup(s.tiles)
 
 	// generate event
 	var posEvent = make(map[Wind]Event)
-	for wind, player := range s.g.posPlayer {
+	for wind, player := range s.g.PosPlayer {
 		player.HandTiles = append(player.HandTiles, initTiles[wind]...)
 		sort.Sort(&player.HandTiles)
 		player.Wind = wind
 		posEvent[wind] = &EventStart{
 			WindRound: s.g.WindRound,
 			InitWind:  wind,
-			Seed:      s.g.seed,
+			Seed:      s.g.Seed,
 			NumGame:   s.g.NumGame,
 			NumHonba:  s.g.NumHonba,
 			NumRiichi: s.g.NumRiichi,
 			InitTiles: initTiles[wind],
-			Rule:      s.g.rule,
+			Rule:      s.g.Rule,
 		}
 	}
 	s.g.addPosEvent(posEvent)
@@ -72,7 +72,7 @@ func (s *DealState) step() map[Wind]Calls {
 		// generate new indicator event
 		indicatorTileID := s.g.Tiles.GetCurrentIndicator()
 		var posEvent = make(map[Wind]Event)
-		for wind := range s.g.posPlayer {
+		for wind := range s.g.PosPlayer {
 			posEvent[wind] = &EventNewIndicator{
 				Tile: indicatorTileID,
 			}
@@ -80,13 +80,13 @@ func (s *DealState) step() map[Wind]Calls {
 		s.g.addPosEvent(posEvent)
 	}
 
-	pMain := s.g.posPlayer[s.g.Position]
-	s.g.GetTileProcess(pMain, tile)
+	pMain := s.g.PosPlayer[s.g.Position]
+	s.g.getTileProcess(pMain, tile)
 	validActions := s.g.JudgeSelfCalls(pMain)
 
 	// generate event
 	var posEvent = make(map[Wind]Event)
-	for wind := range s.g.posPlayer {
+	for wind := range s.g.PosPlayer {
 		var t = TileDummy
 		if wind == pMain.Wind {
 			t = tile
@@ -127,10 +127,10 @@ func (s *DealState) next(posCalls map[Wind]*Call) error {
 		return errors.New("invalid call nums")
 	}
 	call := posCalls[s.g.Position]
-	pMain := s.g.posPlayer[s.g.Position]
+	pMain := s.g.PosPlayer[s.g.Position]
 	switch call.CallType {
 	case Discard:
-		s.g.DiscardTileProcess(pMain, call.CallTiles[0])
+		s.g.discardTileProcess(pMain, call.CallTiles[0])
 		tsumoGiri := pMain.TilesTsumoGiri[len(pMain.TilesTsumoGiri)-1]
 		s.g.State = &DiscardState{
 			g:         s.g,
@@ -158,7 +158,7 @@ func (s *DealState) next(posCalls map[Wind]*Call) error {
 		s.g.breakIppatsu()
 		// generate riichi event
 		var posEvent = make(map[Wind]Event)
-		for wind := range s.g.posPlayer {
+		for wind := range s.g.PosPlayer {
 			posEvent[wind] = &EventRiichi{
 				Who:  pMain.Wind,
 				Step: 1,
@@ -203,7 +203,7 @@ type DiscardState struct {
 // step after one player discard a tile
 func (s *DiscardState) step() map[Wind]Calls {
 	var validCalls = make(map[Wind]Calls)
-	for wind, player := range s.g.posPlayer {
+	for wind, player := range s.g.PosPlayer {
 		if wind == s.g.Position {
 			continue
 		}
@@ -225,7 +225,7 @@ func (s *DiscardState) step() map[Wind]Calls {
 			Tile: s.tileID,
 		}
 	}
-	for wind := range s.g.posPlayer {
+	for wind := range s.g.PosPlayer {
 		posEvent[wind] = event
 	}
 	s.g.addPosEvent(posEvent)
@@ -236,7 +236,7 @@ func (s *DiscardState) step() map[Wind]Calls {
 func (s *DiscardState) next(posCalls map[Wind]*Call) error {
 	// furiten check
 	for _, wind := range s.g.getOtherWinds() {
-		player := s.g.posPlayer[wind]
+		player := s.g.PosPlayer[wind]
 		if !player.FuritenStatus {
 			continue
 		}
@@ -263,7 +263,7 @@ func (s *DiscardState) next(posCalls map[Wind]*Call) error {
 		})
 	}
 
-	pMain := s.g.posPlayer[s.g.Position]
+	pMain := s.g.PosPlayer[s.g.Position]
 	// if there is no call after discard, then next player deal
 	if len(posCalls) == 0 {
 		if s.g.judgeSuuChaRiichi() {
@@ -285,7 +285,7 @@ func (s *DiscardState) next(posCalls map[Wind]*Call) error {
 			s.g.processRiichiStep2(pMain)
 			// generate riichi step 2 event
 			posEvent = make(map[Wind]Event)
-			for wind := range s.g.posPlayer {
+			for wind := range s.g.PosPlayer {
 				posEvent[wind] = &EventRiichi{
 					Who:  pMain.Wind,
 					Step: 2,
@@ -315,7 +315,7 @@ func (s *DiscardState) next(posCalls map[Wind]*Call) error {
 			if call.CallType != Ron {
 				continue
 			}
-			player := s.g.posPlayer[wind]
+			player := s.g.PosPlayer[wind]
 			result := s.g.processRon(player, call)
 			results[wind] = result
 		}
@@ -354,7 +354,7 @@ func (s *DiscardState) next(posCalls map[Wind]*Call) error {
 			s.g.processRiichiStep2(pMain)
 			// generate riichi step 2 event
 			posEvent = make(map[Wind]Event)
-			for w := range s.g.posPlayer {
+			for w := range s.g.PosPlayer {
 				posEvent[w] = &EventRiichi{
 					Who:  pMain.Wind,
 					Step: 2,
@@ -371,7 +371,7 @@ func (s *DiscardState) next(posCalls map[Wind]*Call) error {
 			}
 			return nil
 		}
-		player := s.g.posPlayer[wind]
+		player := s.g.PosPlayer[wind]
 		s.g.Position = wind
 		switch call.CallType {
 		case Chi, Pon:
@@ -420,7 +420,7 @@ func (s *ChiPonState) String() string {
 // step after one player chi or pon
 func (s *ChiPonState) step() map[Wind]Calls {
 	var validCalls = make(map[Wind]Calls)
-	validCalls[s.g.Position] = s.g.JudgeDiscardCall(s.g.posPlayer[s.g.Position])
+	validCalls[s.g.Position] = s.g.JudgeDiscardCall(s.g.PosPlayer[s.g.Position])
 
 	// generate event
 	var posEvent = make(map[Wind]Event)
@@ -437,7 +437,7 @@ func (s *ChiPonState) step() map[Wind]Calls {
 			Call: s.call,
 		}
 	}
-	for wind := range s.g.posPlayer {
+	for wind := range s.g.PosPlayer {
 		posEvent[wind] = event
 	}
 	s.g.addPosEvent(posEvent)
@@ -449,9 +449,9 @@ func (s *ChiPonState) next(posCalls map[Wind]*Call) error {
 	if len(posCalls) != 1 || posCalls[s.g.Position].CallType != Discard {
 		return errors.New("invalid call after chi pon")
 	}
-	player := s.g.posPlayer[s.g.Position]
+	player := s.g.PosPlayer[s.g.Position]
 	tileID := posCalls[s.g.Position].CallTiles[0]
-	s.g.DiscardTileProcess(player, tileID)
+	s.g.discardTileProcess(player, tileID)
 	tsumoGiri := player.TilesTsumoGiri[len(player.TilesTsumoGiri)-1]
 	s.g.State = &DiscardState{
 		g:         s.g,
@@ -470,7 +470,7 @@ type KanState struct {
 func (s *KanState) step() map[Wind]Calls {
 	// judge chan kan
 	var validCalls = make(map[Wind]Calls)
-	for wind, player := range s.g.posPlayer {
+	for wind, player := range s.g.PosPlayer {
 		if wind == s.g.Position {
 			continue
 		}
@@ -500,7 +500,7 @@ func (s *KanState) step() map[Wind]Calls {
 		}
 
 	}
-	for wind := range s.g.posPlayer {
+	for wind := range s.g.PosPlayer {
 		posEvent[wind] = kanEvent
 	}
 	s.g.addPosEvent(posEvent)
@@ -510,7 +510,7 @@ func (s *KanState) step() map[Wind]Calls {
 func (s *KanState) next(posCalls map[Wind]*Call) error {
 	// if there is no chan kan call
 	if len(posCalls) == 0 {
-		s.g.posPlayer[s.g.Position].KanNum++
+		s.g.PosPlayer[s.g.Position].KanNum++
 		if s.g.judgeSuuKaiKan() {
 			s.g.State = &EndState{
 				g: s.g,
@@ -531,7 +531,7 @@ func (s *KanState) next(posCalls map[Wind]*Call) error {
 		var posResults = make(map[Wind]*Result)
 		// if there are chan kan call, process it
 		for wind, call := range posCalls {
-			player := s.g.posPlayer[wind]
+			player := s.g.PosPlayer[wind]
 			posResults[wind] = s.g.processChanKan(player, call)
 		}
 		s.g.State = &EndState{
@@ -553,10 +553,10 @@ type EndState struct {
 
 func (s *EndState) step() map[Wind]Calls {
 	var prePoints = map[Wind]int{
-		East:  s.g.posPlayer[East].Points,
-		South: s.g.posPlayer[South].Points,
-		West:  s.g.posPlayer[West].Points,
-		North: s.g.posPlayer[North].Points,
+		East:  s.g.PosPlayer[East].Points,
+		South: s.g.PosPlayer[South].Points,
+		West:  s.g.PosPlayer[West].Points,
+		North: s.g.PosPlayer[North].Points,
 	}
 	var pointsChanges = make(map[Wind]int)
 	var posEvent = make(map[Wind]Event)
@@ -566,14 +566,14 @@ func (s *EndState) step() map[Wind]Calls {
 		// ryuu kyoku
 		if s.posResults[East].RyuuKyokuReason == RyuuKyokuNormal {
 			tenhaiWinds := s.g.judgeTenHaiWinds()
-			if s.g.rule.IsNagashiMangan {
+			if s.g.Rule.IsNagashiMangan {
 				// judge ryuu kyoku mangan
 				bSlice := s.g.judgeNagashiMangan()
 				if len(bSlice) != 0 {
 					s.g.processNagashiMangan(bSlice)
 					// generate nagashi mangan events
 					for _, wind := range bSlice {
-						for w := range s.g.posPlayer {
+						for w := range s.g.PosPlayer {
 							posEvent[w] = &EventNagashiMangan{
 								Who: wind,
 							}
@@ -589,9 +589,9 @@ func (s *EndState) step() map[Wind]Calls {
 				// process normal ryuu kyoku
 				s.g.processNormalRyuuKyoku(tenhaiWinds)
 			}
-			for w := range s.g.posPlayer {
+			for w := range s.g.PosPlayer {
 				for _, wind := range tenhaiWinds {
-					player := s.g.posPlayer[wind]
+					player := s.g.PosPlayer[wind]
 					posEvent[w] = &EventTenhaiEnd{
 						Who:         wind,
 						HandTiles:   player.HandTiles,
@@ -605,15 +605,12 @@ func (s *EndState) step() map[Wind]Calls {
 			if !common.Contain(tenhaiWinds, East) {
 				// east not ten hai
 				s.g.nextRound = true
-				//s.g.WindRound++
 			}
 			s.g.honbaPlus = true
-			//s.g.NumHonba++
 
 		} else {
 			// process special ryuu kyoku
 			s.g.honbaPlus = true
-			//s.g.NumHonba++
 		}
 		for wind, result := range s.posResults {
 			posEvent[wind] = &EventRyuuKyoku{
@@ -626,10 +623,10 @@ func (s *EndState) step() map[Wind]Calls {
 
 	case 3:
 		// san cha ron
-		if !s.g.rule.IsSanChaHou {
+		if !s.g.Rule.IsSanChaHou {
 			// san cha ron not allowed
 			// generate ryuu kyoku events
-			for wind := range s.g.posPlayer {
+			for wind := range s.g.PosPlayer {
 				posEvent[wind] = &EventRyuuKyoku{
 					Who:    wind,
 					Reason: RyuuKyokuSanChaHou,
@@ -641,10 +638,8 @@ func (s *EndState) step() map[Wind]Calls {
 			_, ok := s.posResults[East]
 			if !ok {
 				s.g.nextRound = true
-				//s.g.WindRound++
 			}
 			s.g.honbaPlus = true
-			//s.g.NumHonba++
 		} else {
 			s.g.processRonResult(s.posResults)
 			// generate san cha ron events
@@ -653,10 +648,8 @@ func (s *EndState) step() map[Wind]Calls {
 			_, ok := s.posResults[East]
 			if ok {
 				s.g.honbaPlus = true
-				//s.g.NumHonba++
 			} else {
 				s.g.nextRound = true
-				//s.g.WindRound++
 			}
 		}
 
@@ -675,10 +668,10 @@ func (s *EndState) step() map[Wind]Calls {
 		}
 		if result.RyuuKyokuReason == RyuuKyokuKyuuShuKyuuHai {
 			// generate ryuu kyoku events
-			for w := range s.g.posPlayer {
+			for w := range s.g.PosPlayer {
 				posEvent[w] = &EventRyuuKyoku{
 					Who:       wind,
-					HandTiles: s.g.posPlayer[wind].HandTiles,
+					HandTiles: s.g.PosPlayer[wind].HandTiles,
 					Reason:    RyuuKyokuKyuuShuKyuuHai,
 				}
 			}
@@ -687,10 +680,8 @@ func (s *EndState) step() map[Wind]Calls {
 
 			if wind != East {
 				s.g.nextRound = true
-				//s.g.WindRound++
 			}
 			s.g.honbaPlus = true
-			//s.g.NumHonba++
 		} else {
 			if result.RonCall.CallType != Tsumo {
 				s.g.processRonResult(s.posResults)
@@ -702,10 +693,10 @@ func (s *EndState) step() map[Wind]Calls {
 				}
 				s.g.processTsumoResult(wind, result)
 				// generate tsumo events
-				for w := range s.g.posPlayer {
+				for w := range s.g.PosPlayer {
 					posEvent[w] = &EventTsumo{
 						Who:       wind,
-						HandTiles: s.g.posPlayer[wind].HandTiles,
+						HandTiles: s.g.PosPlayer[wind].HandTiles,
 						WinTile:   result.RonCall.CallTiles[0],
 						Result:    result,
 					}
@@ -715,10 +706,8 @@ func (s *EndState) step() map[Wind]Calls {
 
 				if wind == East {
 					s.g.honbaPlus = true
-					//s.g.NumHonba++
 				} else {
 					s.g.nextRound = true
-					//s.g.WindRound++
 				}
 			}
 		}
@@ -726,11 +715,11 @@ func (s *EndState) step() map[Wind]Calls {
 
 	// calculate scores changes
 	for wind, points := range prePoints {
-		pointsChanges[wind] = s.g.posPlayer[wind].Points - points
+		pointsChanges[wind] = s.g.PosPlayer[wind].Points - points
 	}
 
 	// generate end events
-	for w := range s.g.posPlayer {
+	for w := range s.g.PosPlayer {
 		posEvent[w] = &EventEnd{
 			PointsChange: pointsChanges,
 		}
@@ -741,10 +730,10 @@ func (s *EndState) step() map[Wind]Calls {
 		return make(map[Wind]Calls)
 	}
 	return map[Wind]Calls{
-		East:  {NewCall(Next, nil, nil)},
-		South: {NewCall(Next, nil, nil)},
-		West:  {NewCall(Next, nil, nil)},
-		North: {NewCall(Next, nil, nil)},
+		East:  {NextCall},
+		South: {NextCall},
+		West:  {NextCall},
+		North: {NextCall},
 	}
 }
 

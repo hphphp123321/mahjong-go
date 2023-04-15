@@ -21,11 +21,11 @@ type Rule struct {
 	IsRinshanFu          bool  `json:"is_rinshan_fu"`            // true for has rinshan fu, false for no rinshan fu
 
 	// Score Rule
-	IsManganRound     bool `json:"is_mangan_round"`     // true for points round up to mangan, false for no round
-	IsKazoeYakuman    bool `json:"is_kazoe_yakuman"`    // true for has kazoe yakuman(13 han), false for no kazoe yakuman
-	HasDoubleYakumans bool `json:"has_double_yakumans"` // true for has double yakuman, false for no double yakuman
-	IsYakumanSum      bool `json:"is_yakuman_sum"`      // true for  yakuman, false for no sum yakuman
-	HonbaValue        int  `json:"honba_value"`         // HonbaValue represent the value of one honba in score calculation, default is 100
+	IsManganRound    bool `json:"is_mangan_round"`     // true for points round up to mangan, false for no round
+	IsKazoeYakuman   bool `json:"is_kazoe_yakuman"`    // true for has kazoe yakuman(13 han), false for no kazoe yakuman
+	IsDoubleYakumans bool `json:"has_double_yakumans"` // true for has double yakuman, false for no double yakuman
+	IsYakumanSum     bool `json:"is_yakuman_sum"`      // true for  yakuman, false for no sum yakuman
+	HonbaValue       int  `json:"honba_value"`         // HonbaValue represent the value of one honba in score calculation, default is 100
 
 	// Other Rule
 	IsSanChaHou     bool `json:"is_san_cha_hou"`    // can san chan ron, true for can, false for can't -> ryuu kyoku
@@ -55,7 +55,7 @@ func (r *Rule) YakuRule() *yaku.RulesStruct {
 
 func (r *Rule) ScoreRule() *score.RulesStruct {
 	var doubleYakuMans map[yaku.Yakuman]bool
-	if r.HasDoubleYakumans {
+	if r.IsDoubleYakumans {
 		doubleYakuMans = DefaultDoubleYakumans()
 	}
 	return &score.RulesStruct{
@@ -130,7 +130,7 @@ func (r *Rule) MarshalJSON() ([]byte, error) {
 		IsRinshanFu:          r.IsRinshanFu,
 		IsManganRound:        r.IsManganRound,
 		IsKazoeYakuman:       r.IsKazoeYakuman,
-		HasDoubleYakumans:    r.HasDoubleYakumans,
+		HasDoubleYakumans:    r.IsDoubleYakumans,
 		IsYakumanSum:         r.IsYakumanSum,
 		HonbaValue:           r.HonbaValue,
 		IsSanChaHou:          r.IsSanChaHou,
@@ -171,7 +171,7 @@ func (r *Rule) UnmarshalJSON(data []byte) error {
 	r.IsRinshanFu = s.IsRinshanFu
 	r.IsManganRound = s.IsManganRound
 	r.IsKazoeYakuman = s.IsKazoeYakuman
-	r.HasDoubleYakumans = s.HasDoubleYakumans
+	r.IsDoubleYakumans = s.HasDoubleYakumans
 	r.IsYakumanSum = s.IsYakumanSum
 	r.HonbaValue = s.HonbaValue
 	r.IsSanChaHou = s.IsSanChaHou

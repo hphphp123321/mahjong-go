@@ -72,76 +72,17 @@ func (events *Events) UnmarshalJSON(data []byte) error {
 			return fmt.Errorf("unknown event type: %s", e.Type)
 		}
 
-		// 创建事件实例
+		// create a new event
 		eventValue := reflect.New(eventType).Elem()
 		eventInterface := eventValue.Addr().Interface().(Event)
 
-		// 反序列化事件
+		// unmarshal the event
 		err = eventInterface.UnmarshalJSON(e.Event)
 		if err != nil {
 			return err
 		}
 
 		*events = append(*events, eventInterface)
-
-		//switch e.Type {
-		//case EventTypeGet.String():
-		//	var event EventGet
-		//	err = event.UnmarshalJSON(e.Event)
-		//	*events = append(*events, &event)
-		//case EventTypeTsumoGiri.String():
-		//	var event EventTsumoGiri
-		//	err = event.UnmarshalJSON(e.Event)
-		//	*events = append(*events, &event)
-		//case EventTypeDiscard.String():
-		//	var event EventDiscard
-		//	err = event.UnmarshalJSON(e.Event)
-		//	*events = append(*events, &event)
-		//case EventTypeChi.String():
-		//	var event EventChi
-		//	err = event.UnmarshalJSON(e.Event)
-		//	*events = append(*events, &event)
-		//case EventTypePon.String():
-		//	var event EventPon
-		//	err = event.UnmarshalJSON(e.Event)
-		//	*events = append(*events, &event)
-		//case EventTypeAnKan.String():
-		//	var event EventAnKan
-		//	err = event.UnmarshalJSON(e.Event)
-		//	*events = append(*events, &event)
-		//case EventTypeShouMinKan.String():
-		//	var event EventShouMinKan
-		//	err = event.UnmarshalJSON(e.Event)
-		//	*events = append(*events, &event)
-		//case EventTypeDaiMinKan.String():
-		//	var event EventDaiMinKan
-		//	err = event.UnmarshalJSON(e.Event)
-		//	*events = append(*events, &event)
-		//case EventTypeRon.String():
-		//	var event EventRon
-		//	err = event.UnmarshalJSON(e.Event)
-		//	*events = append(*events, &event)
-		//case EventTypeTsumo.String():
-		//	var event EventTsumo
-		//	err = event.UnmarshalJSON(e.Event)
-		//	*events = append(*events, &event)
-		//case EventTypeChanKan.String():
-		//	var event EventChanKan
-		//	err = event.UnmarshalJSON(e.Event)
-		//	*events = append(*events, &event)
-		//case EventTypeRiichi.String():
-		//	var event EventRiichi
-		//	err = event.UnmarshalJSON(e.Event)
-		//	*events = append(*events, &event)
-		//case EventTypeNewIndicator.String():
-		//	var event EventNewIndicator
-		//	err = event.UnmarshalJSON(e.Event)
-		//	*events = append(*events, &event)
-		//case EventTypeRyuuKyoku.String():
-		//	var event EventRyuuKyoku
-		//	err = event.UnmarshalJSON(e.Event)
-		//	*events = append(*events, &event)
-		//}
 	}
 	return err
 }
@@ -181,7 +122,7 @@ func (event *EventGet) UnmarshalJSON(data []byte) error {
 
 type EventTsumoGiri struct {
 	Who  Wind `json:"who"`
-	Tile Tile `json:"tile: int,omitempty"`
+	Tile Tile `json:"tile,omitempty"`
 }
 
 func (event *EventTsumoGiri) GetType() EventType {
@@ -635,11 +576,11 @@ func (event *EventRyuuKyoku) UnmarshalJSON(data []byte) error {
 
 type EventGlobalInit struct {
 	AllTiles   Tiles        `json:"all_tiles"`
-	WindRound  WindRound    `json:"windRound"`
+	WindRound  WindRound    `json:"wind_round"`
 	Seed       int64        `json:"seed"`
-	NumGame    int          `json:"numGame"`
-	NumHonba   int          `json:"numHonba"`
-	NumRiichi  int          `json:"numRiichi"`
+	NumGame    int          `json:"num_game"`
+	NumHonba   int          `json:"num_honba"`
+	NumRiichi  int          `json:"num_riichi"`
 	Rule       *Rule        `json:"rule"`
 	InitPoints map[Wind]int `json:"init_points"`
 }
@@ -651,11 +592,11 @@ func (event *EventGlobalInit) GetType() EventType {
 func (event *EventGlobalInit) MarshalJSON() ([]byte, error) {
 	return json.Marshal(&struct {
 		AllTiles   Tiles          `json:"all_tiles"`
-		WindRound  string         `json:"windRound"`
+		WindRound  string         `json:"wind_round"`
 		Seed       int64          `json:"seed"`
-		NumGame    int            `json:"numGame"`
-		NumHonba   int            `json:"numHonba"`
-		NumRiichi  int            `json:"numRiichi"`
+		NumGame    int            `json:"num_game"`
+		NumHonba   int            `json:"num_honba"`
+		NumRiichi  int            `json:"num_riichi"`
 		Rule       *Rule          `json:"rule"`
 		InitPoints map[string]int `json:"init_points"`
 	}{
@@ -679,11 +620,11 @@ func (event *EventGlobalInit) MarshalJSON() ([]byte, error) {
 func (event *EventGlobalInit) UnmarshalJSON(data []byte) error {
 	var tmp struct {
 		AllTiles   Tiles          `json:"all_tiles"`
-		WindRound  string         `json:"windRound"`
+		WindRound  string         `json:"wind_round"`
 		Seed       int64          `json:"seed"`
-		NumGame    int            `json:"numGame"`
-		NumHonba   int            `json:"numHonba"`
-		NumRiichi  int            `json:"numRiichi"`
+		NumGame    int            `json:"num_game"`
+		NumHonba   int            `json:"num_honba"`
+		NumRiichi  int            `json:"num_riichi"`
 		Rule       *Rule          `json:"rule"`
 		InitPoints map[string]int `json:"init_points"`
 	}
@@ -708,15 +649,15 @@ func (event *EventGlobalInit) UnmarshalJSON(data []byte) error {
 }
 
 type EventStart struct {
-	WindRound WindRound `json:"windRound"`
-	InitWind  Wind      `json:"initWind"`
+	WindRound WindRound `json:"wind_round"`
+	InitWind  Wind      `json:"init_wind"`
 
 	Seed      int64 `json:"seed"`
-	NumGame   int   `json:"numGame"`
-	NumHonba  int   `json:"numHonba"`
-	NumRiichi int   `json:"numRiichi"`
+	NumGame   int   `json:"num_game"`
+	NumHonba  int   `json:"num_honba"`
+	NumRiichi int   `json:"num_riichi"`
 
-	InitTiles Tiles `json:"initTiles"`
+	InitTiles Tiles `json:"init_tiles"`
 
 	Rule *Rule `json:"rule"`
 }
@@ -727,13 +668,13 @@ func (event *EventStart) GetType() EventType {
 
 func (event *EventStart) MarshalJSON() ([]byte, error) {
 	return json.Marshal(&struct {
-		WindRound string `json:"windRound"`
-		InitWind  string `json:"initWind"`
+		WindRound string `json:"wind_round"`
+		InitWind  string `json:"init_wind"`
 		Seed      int64  `json:"seed"`
-		NumGame   int    `json:"numGame"`
-		NumHonba  int    `json:"numHonba"`
-		NumRiichi int    `json:"numRiichi"`
-		InitTiles Tiles  `json:"initTiles"`
+		NumGame   int    `json:"num_game"`
+		NumHonba  int    `json:"num_honba"`
+		NumRiichi int    `json:"num_riichi"`
+		InitTiles Tiles  `json:"init_tiles"`
 		Rule      *Rule  `json:"rule"`
 	}{
 		WindRound: event.WindRound.String(),
@@ -749,13 +690,13 @@ func (event *EventStart) MarshalJSON() ([]byte, error) {
 
 func (event *EventStart) UnmarshalJSON(data []byte) error {
 	var tmp struct {
-		WindRound string `json:"windRound"`
-		InitWind  string `json:"initWind"`
+		WindRound string `json:"wind_round"`
+		InitWind  string `json:"init_wind"`
 		Seed      int64  `json:"seed"`
-		NumGame   int    `json:"numGame"`
-		NumHonba  int    `json:"numHonba"`
-		NumRiichi int    `json:"numRiichi"`
-		InitTiles Tiles  `json:"initTiles"`
+		NumGame   int    `json:"num_game"`
+		NumHonba  int    `json:"num_honba"`
+		NumRiichi int    `json:"num_riichi"`
+		InitTiles Tiles  `json:"init_tiles"`
 		Rule      *Rule  `json:"rule"`
 	}
 	if err := json.Unmarshal(data, &tmp); err != nil {
@@ -773,7 +714,7 @@ func (event *EventStart) UnmarshalJSON(data []byte) error {
 }
 
 type EventEnd struct {
-	PointsChange map[Wind]int `json:"pointsChange"`
+	PointsChange map[Wind]int `json:"points_change"`
 }
 
 func (event *EventEnd) GetType() EventType {
@@ -786,7 +727,7 @@ func (event *EventEnd) MarshalJSON() ([]byte, error) {
 		pointsChange[k.String()] = v
 	}
 	return json.Marshal(&struct {
-		PointsChange map[string]int `json:"pointsChange"`
+		PointsChange map[string]int `json:"points_change"`
 	}{
 		PointsChange: pointsChange,
 	})
@@ -794,7 +735,7 @@ func (event *EventEnd) MarshalJSON() ([]byte, error) {
 
 func (event *EventEnd) UnmarshalJSON(data []byte) error {
 	var tmp struct {
-		PointsChange map[string]int `json:"pointsChange"`
+		PointsChange map[string]int `json:"points_change"`
 	}
 	if err := json.Unmarshal(data, &tmp); err != nil {
 		return err
@@ -809,7 +750,7 @@ func (event *EventEnd) UnmarshalJSON(data []byte) error {
 
 type EventFuriten struct {
 	Who           Wind          `json:"who"`
-	FuritenReason FuritenReason `json:"furitenReason"`
+	FuritenReason FuritenReason `json:"furiten_reason"`
 }
 
 func (event *EventFuriten) GetType() EventType {
@@ -819,7 +760,7 @@ func (event *EventFuriten) GetType() EventType {
 func (event *EventFuriten) MarshalJSON() ([]byte, error) {
 	return json.Marshal(&struct {
 		Who           string `json:"who"`
-		FuritenReason string `json:"furitenReason"`
+		FuritenReason string `json:"furiten_reason"`
 	}{
 		Who:           event.Who.String(),
 		FuritenReason: event.FuritenReason.String(),
@@ -829,7 +770,7 @@ func (event *EventFuriten) MarshalJSON() ([]byte, error) {
 func (event *EventFuriten) UnmarshalJSON(data []byte) error {
 	var tmp struct {
 		Who           string `json:"who"`
-		FuritenReason string `json:"furitenReason"`
+		FuritenReason string `json:"furiten_reason"`
 	}
 	if err := json.Unmarshal(data, &tmp); err != nil {
 		return err

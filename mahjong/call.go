@@ -107,8 +107,5 @@ func (calls *Calls) Remove(call *Call) {
 	*calls = append((*calls)[:idx], (*calls)[idx+1:]...)
 }
 
-var SkipCall = &Call{
-	CallType:         Skip,
-	CallTiles:        Tiles{TileDummy, TileDummy, TileDummy, TileDummy},
-	CallTilesFromWho: []Wind{WindDummy, WindDummy, WindDummy, WindDummy},
-}
+var SkipCall = NewCall(Skip, nil, nil)
+var NextCall = NewCall(Next, nil, nil)

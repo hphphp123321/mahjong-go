@@ -11,18 +11,16 @@ import (
 )
 
 type Game struct {
-	rule *Rule
-	seed int64
+	Rule *Rule
+	Seed int64
 
-	P0        *Player
-	P1        *Player
-	P2        *Player
-	P3        *Player
-	posPlayer map[Wind]*Player
+	P0 *Player
+	P1 *Player
+	P2 *Player
+	P3 *Player
 
-	posEvents  map[Wind]Events
-	ValidCalls map[Wind]Calls
-	//posCall   map[Wind]*Call
+	PosPlayer map[Wind]*Player
+	posEvents map[Wind]Events
 
 	Tiles *MahjongTiles
 
@@ -43,123 +41,31 @@ type Game struct {
 // NewMahjongGame
 //
 //	@Description: create a new game
-//	@param playerSlice: player slice, len(playerSlice) == 4, playerSlice[0, 1, 2, 3] is east, south, west, north
-//	@param seed: random seed
-//	@param rule: game rule, nil for default rule
+//	@param Seed: random Seed
+//	@param Rule: game Rule, nil for default Rule
 //	@return *Game
-func NewMahjongGame(playerSlice []*Player, seed int64, rule *Rule) *Game {
+func NewMahjongGame(seed int64, rule *Rule) *Game {
 	randP := rand.New(rand.NewSource(seed))
 	game := Game{
 		Tiles:     NewMahjongTiles(randP),
 		WindRound: WindRoundDummy,
-		seed:      seed,
+		Seed:      seed,
 	}
-	game.Reset(playerSlice, nil)
 	if rule == nil {
-		game.rule = GetDefaultRule()
+		game.Rule = GetDefaultRule()
 	} else {
-		game.rule = rule
+		game.Rule = rule
 	}
 	return &game
 }
 
-func (game *Game) Step() map[Wind]Calls {
-	return game.State.step()
-}
-
-func (game *Game) Next(posCalls map[Wind]*Call) bool {
-	if err := game.State.next(posCalls); err != nil {
-		if err == ErrGameEnd {
-			return false
-		} else {
-			panic(err)
-		}
-	}
-	return true
-}
-
-func (game *Game) GetPosEvents(pos Wind, startIndex int) Events {
-	return game.posEvents[pos][startIndex:]
-}
-
-func (game *Game) GetPosBoardState(pos Wind) (r *BoardState) {
-	r = &BoardState{
-		WindRound:      game.WindRound,
-		NumHonba:       game.NumHonba,
-		NumRiichi:      game.NumRiichi,
-		DoraIndicators: game.Tiles.DoraIndicators(),
-		PlayerWind:     pos,
-		Position:       game.Position,
-		HandTiles:      game.posPlayer[pos].HandTiles,
-		//ValidActions:   nil,
-		NumRemainTiles: game.Tiles.NumRemainTiles,
-		PlayerEast: PlayerState{
-			Points:         game.posPlayer[East].Points,
-			Melds:          game.posPlayer[East].Melds,
-			DiscardTiles:   game.posPlayer[East].DiscardTiles,
-			TilesTsumoGiri: game.posPlayer[East].TilesTsumoGiri,
-			IsRiichi:       game.posPlayer[East].IsRiichi,
-		},
-		PlayerSouth: PlayerState{
-			Points:         game.posPlayer[South].Points,
-			Melds:          game.posPlayer[South].Melds,
-			DiscardTiles:   game.posPlayer[South].DiscardTiles,
-			TilesTsumoGiri: game.posPlayer[South].TilesTsumoGiri,
-			IsRiichi:       game.posPlayer[South].IsRiichi,
-		},
-		PlayerWest: PlayerState{
-			Points:         game.posPlayer[West].Points,
-			Melds:          game.posPlayer[West].Melds,
-			DiscardTiles:   game.posPlayer[West].DiscardTiles,
-			TilesTsumoGiri: game.posPlayer[West].TilesTsumoGiri,
-			IsRiichi:       game.posPlayer[West].IsRiichi,
-		},
-		PlayerNorth: PlayerState{
-			Points:         game.posPlayer[North].Points,
-			Melds:          game.posPlayer[North].Melds,
-			DiscardTiles:   game.posPlayer[North].DiscardTiles,
-			TilesTsumoGiri: game.posPlayer[North].TilesTsumoGiri,
-			IsRiichi:       game.posPlayer[North].IsRiichi,
-		},
-	}
-	return r
-}
-
-func (game *Game) addPosEvent(posEvent map[Wind]Event) {
-	for pos, event := range posEvent {
-		game.posEvents[pos] = append(game.posEvents[pos], event)
-	}
-}
-
-func (game *Game) NewGameRound() {
-	game.NumGame += 1
-	if game.nextRound {
-		game.WindRound++
-		game.nextRound = false
-	}
-	if game.honbaPlus {
-		game.NumHonba++
-		game.honbaPlus = false
-	}
-	game.Tiles.Reset()
-	game.posEvents = map[Wind]Events{}
-	game.Position = East
-	game.posPlayer[Wind((16-game.WindRound)%4)] = game.P0
-	game.posPlayer[Wind((17-game.WindRound)%4)] = game.P1
-	game.posPlayer[Wind((18-game.WindRound)%4)] = game.P2
-	game.posPlayer[Wind((19-game.WindRound)%4)] = game.P3
-	game.P0.ResetForRound()
-	game.P1.ResetForRound()
-	game.P2.ResetForRound()
-	game.P3.ResetForRound()
-}
-
 // Reset
 //
-//	@Description: reset game
+//	@Description: reset game for new game
 //	@param playerSlice: player slice, len must be 4, and the order is East, South, West, North
-//	@param tiles: tiles for game, if nil, will use default tiles
-func (game *Game) Reset(playerSlice []*Player, tiles Tiles) {
+//	@param tiles: tiles for game, if nil, will use default random tiles
+//	@return map[Wind]Calls: calls for East player
+func (game *Game) Reset(playerSlice []*Player, tiles Tiles) map[Wind]Calls {
 	game.NumGame = -1
 	game.WindRound = WindRoundEast1
 	game.NumRiichi = 0
@@ -177,10 +83,131 @@ func (game *Game) Reset(playerSlice []*Player, tiles Tiles) {
 	game.P1.ResetForGame()
 	game.P2.ResetForGame()
 	game.P3.ResetForGame()
-	game.posPlayer = map[Wind]*Player{0: playerSlice[0], 1: playerSlice[1], 2: playerSlice[2], 3: playerSlice[3]}
+	game.PosPlayer = map[Wind]*Player{0: playerSlice[0], 1: playerSlice[1], 2: playerSlice[2], 3: playerSlice[3]}
+
+	posCalls, _ := game.Step(make(map[Wind]*Call, 4))
+	return posCalls
 }
 
-func (game *Game) GetTileProcess(pMain *Player, tileID Tile) {
+// Step
+//
+//	@Description: game step
+//	@receiver game
+//	@param map[Wind]*Call: player action, if len(posCall) == 0, game will auto call
+//	@return map[Wind]Calls: player valid actions
+//	@return EndType: game end type, EndTypeNone for not end, EndTypeRound for round end, EndTypeGame for game end
+func (game *Game) Step(posCall map[Wind]*Call) (map[Wind]Calls, EndType) {
+	var posCalls = make(map[Wind]Calls, 4)
+	if len(posCall) == 0 {
+		posCalls = game.State.step()
+	}
+	for len(posCalls) == 0 {
+		if err := game.State.next(posCall); err != nil {
+			if err == ErrGameEnd {
+				return posCalls, EndTypeGame
+			} else {
+				panic(err)
+			}
+		}
+		posCall = make(map[Wind]*Call, 4)
+		posCalls = game.State.step()
+	}
+	if len(posCalls) == 4 {
+		return posCalls, EndTypeRound
+	}
+	return posCalls, EndTypeNone
+}
+
+// GetPosEvents
+//
+//	@Description: get player events
+//	@receiver game
+//	@param pos: player wind
+//	@param startIndex: start index, 0 for all events
+//	@return Events: player events
+func (game *Game) GetPosEvents(pos Wind, startIndex int) Events {
+	return game.posEvents[pos][startIndex:]
+}
+
+// GetPosBoardState
+//
+//	@Description: get player's wind board state
+//	@receiver game
+//	@param pos: player wind
+//	@return r: board state
+func (game *Game) GetPosBoardState(pos Wind, validActions Calls) (r *BoardState) {
+	r = &BoardState{
+		WindRound:      game.WindRound,
+		NumHonba:       game.NumHonba,
+		NumRiichi:      game.NumRiichi,
+		DoraIndicators: game.Tiles.DoraIndicators(),
+		PlayerWind:     pos,
+		Position:       game.Position,
+		HandTiles:      game.PosPlayer[pos].HandTiles,
+		ValidActions:   validActions,
+		NumRemainTiles: game.Tiles.NumRemainTiles,
+		PlayerEast: PlayerState{
+			Points:         game.PosPlayer[East].Points,
+			Melds:          game.PosPlayer[East].Melds,
+			DiscardTiles:   game.PosPlayer[East].DiscardTiles,
+			TilesTsumoGiri: game.PosPlayer[East].TilesTsumoGiri,
+			IsRiichi:       game.PosPlayer[East].IsRiichi,
+		},
+		PlayerSouth: PlayerState{
+			Points:         game.PosPlayer[South].Points,
+			Melds:          game.PosPlayer[South].Melds,
+			DiscardTiles:   game.PosPlayer[South].DiscardTiles,
+			TilesTsumoGiri: game.PosPlayer[South].TilesTsumoGiri,
+			IsRiichi:       game.PosPlayer[South].IsRiichi,
+		},
+		PlayerWest: PlayerState{
+			Points:         game.PosPlayer[West].Points,
+			Melds:          game.PosPlayer[West].Melds,
+			DiscardTiles:   game.PosPlayer[West].DiscardTiles,
+			TilesTsumoGiri: game.PosPlayer[West].TilesTsumoGiri,
+			IsRiichi:       game.PosPlayer[West].IsRiichi,
+		},
+		PlayerNorth: PlayerState{
+			Points:         game.PosPlayer[North].Points,
+			Melds:          game.PosPlayer[North].Melds,
+			DiscardTiles:   game.PosPlayer[North].DiscardTiles,
+			TilesTsumoGiri: game.PosPlayer[North].TilesTsumoGiri,
+			IsRiichi:       game.PosPlayer[North].IsRiichi,
+		},
+	}
+	return r
+}
+
+func (game *Game) addPosEvent(posEvent map[Wind]Event) {
+	for pos, event := range posEvent {
+		game.posEvents[pos] = append(game.posEvents[pos], event)
+	}
+}
+
+func (game *Game) newGameRound() {
+	game.NumGame += 1
+	if game.nextRound {
+		game.WindRound++
+		game.nextRound = false
+	}
+	if game.honbaPlus {
+		game.NumHonba++
+		game.honbaPlus = false
+	}
+	game.Tiles.Reset()
+	game.posEvents = map[Wind]Events{}
+	game.Position = East
+	game.PosPlayer[Wind((16-game.WindRound)%4)] = game.P0
+	game.PosPlayer[Wind((17-game.WindRound)%4)] = game.P1
+	game.PosPlayer[Wind((18-game.WindRound)%4)] = game.P2
+	game.PosPlayer[Wind((19-game.WindRound)%4)] = game.P3
+	game.P0.ResetForRound()
+	game.P1.ResetForRound()
+	game.P2.ResetForRound()
+	game.P3.ResetForRound()
+}
+
+func (game *Game) getTileProcess(pMain *Player, tileID Tile) {
 	if pMain.IsRiichi {
 		for _, tile := range pMain.HandTiles {
 			game.Tiles.allTiles[tile].discardable = false
@@ -191,19 +218,16 @@ func (game *Game) GetTileProcess(pMain *Player, tileID Tile) {
 		}
 	}
 	pMain.HandTiles = append(pMain.HandTiles, tileID)
-	if len(pMain.HandTiles) > 14 {
-		panic("HandTiles len > 14")
-	}
 	pMain.JunNum++
 	pMain.JunFuriten = false
 }
 
-// DealTile deal a tile
-func (game *Game) DealTile(dealRinshan bool) Tile {
+// dealTile deal a tile
+func (game *Game) dealTile(dealRinshan bool) Tile {
 	return game.Tiles.DealTile(dealRinshan)
 }
 
-func (game *Game) DiscardTileProcess(pMain *Player, tileID Tile) {
+func (game *Game) discardTileProcess(pMain *Player, tileID Tile) {
 	if !game.Tiles.allTiles[tileID].discardable {
 		panic("Illegal Discard ID")
 	}
@@ -213,9 +237,6 @@ func (game *Game) DiscardTileProcess(pMain *Player, tileID Tile) {
 		pMain.TilesTsumoGiri = append(pMain.TilesTsumoGiri, false)
 	}
 	pMain.HandTiles.Remove(tileID)
-	if len(pMain.HandTiles) > 13 {
-		panic("HandTiles len > 13")
-	}
 	pMain.DiscardTiles.Append(tileID)
 	pMain.BoardTiles.Append(tileID)
 	sort.Sort(&pMain.HandTiles)
@@ -238,15 +259,15 @@ func (game *Game) DiscardTileProcess(pMain *Player, tileID Tile) {
 	}
 	otherWinds := game.getOtherWinds()
 	for _, wind := range otherWinds {
-		if common.Contain(tileID/4, game.posPlayer[wind].TenhaiSlice) {
-			game.posPlayer[wind].FuritenStatus = true
+		if common.Contain(tileID/4, game.PosPlayer[wind].TenhaiSlice) {
+			game.PosPlayer[wind].FuritenStatus = true
 		} else {
-			game.posPlayer[wind].FuritenStatus = false
+			game.PosPlayer[wind].FuritenStatus = false
 		}
 	}
 }
 
-func (game *Game) GetDiscardableSlice(handTiles Tiles) Tiles {
+func (game *Game) getDiscardableSlice(handTiles Tiles) Tiles {
 	tiles := Tiles{}
 	for _, tile := range handTiles {
 		if game.Tiles.allTiles[tile].discardable {
@@ -258,7 +279,7 @@ func (game *Game) GetDiscardableSlice(handTiles Tiles) Tiles {
 
 func (game *Game) JudgeDiscardCall(pMain *Player) Calls {
 	var validCalls = make(Calls, 0)
-	discardableSlice := game.GetDiscardableSlice(pMain.HandTiles)
+	discardableSlice := game.getDiscardableSlice(pMain.HandTiles)
 	for _, tile := range discardableSlice {
 		call := Call{
 			CallType:         Discard,
@@ -372,7 +393,7 @@ func (game *Game) processRiichiStep1(pMain *Player, call *Call) {
 	pMain.RiichiStep = 1
 	pMain.IsRiichi = true
 	riichiTile := call.CallTiles[0]
-	game.DiscardTileProcess(pMain, riichiTile)
+	game.discardTileProcess(pMain, riichiTile)
 	pMain.IppatsuStatus = true
 }
 
@@ -387,7 +408,7 @@ func (game *Game) processChi(pMain *Player, call *Call) {
 	pMain.HandTiles.Remove(call.CallTiles[1])
 	tileID := call.CallTiles[2]
 	subWind := call.CallTilesFromWho[2]
-	game.posPlayer[subWind].BoardTiles.Remove(tileID)
+	game.PosPlayer[subWind].BoardTiles.Remove(tileID)
 	pMain.Melds = append(pMain.Melds, call)
 
 	// 食替
@@ -420,7 +441,7 @@ func (game *Game) processPon(pMain *Player, call *Call) {
 	pMain.HandTiles.Remove(call.CallTiles[1])
 	tileID := call.CallTiles[2]
 	subWind := call.CallTilesFromWho[2]
-	game.posPlayer[subWind].BoardTiles.Remove(tileID)
+	game.PosPlayer[subWind].BoardTiles.Remove(tileID)
 	pMain.Melds = append(pMain.Melds, call)
 	// 食替
 	tileClass := tileID / 4
@@ -440,7 +461,7 @@ func (game *Game) processDaiMinKan(pMain *Player, call *Call) {
 	pMain.HandTiles.Remove(call.CallTiles[2])
 	tileID := call.CallTiles[3]
 	subWind := call.CallTilesFromWho[3]
-	game.posPlayer[subWind].BoardTiles.Remove(tileID)
+	game.PosPlayer[subWind].BoardTiles.Remove(tileID)
 
 	pMain.Melds.Append(call)
 }
@@ -887,7 +908,7 @@ func (game *Game) getRonResult(pMain *Player, winTile Tile) (r *Result) {
 		RoundWind:   base.Wind(game.WindRound / 4),
 		DoraTiles:   IntsToTiles(IndicatorsToDora(game.Tiles.DoraIndicators())),
 		UraTiles:    IntsToTiles(IndicatorsToDora(game.Tiles.UraDoraIndicators())),
-		Rules:       game.rule.YakuRule(),
+		Rules:       game.Rule.YakuRule(),
 		IsTsumo:     pMain.IsTsumo,
 		IsRiichi:    pMain.IsRiichi,
 		IsIpatsu:    pMain.IsIppatsu,
@@ -901,16 +922,16 @@ func (game *Game) getRonResult(pMain *Player, winTile Tile) (r *Result) {
 	if yakuResult == nil {
 		return nil
 	}
-	scoreResult := score.GetScoreByResult(game.rule.ScoreRule(), yakuResult, score.Honba(game.NumHonba))
+	scoreResult := score.GetScoreByResult(game.Rule.ScoreRule(), yakuResult, score.Honba(game.NumHonba))
 	return GenerateRonResult(yakuResult, &scoreResult)
 }
 
 func (game *Game) judgeSuuFonRenDa() bool {
-	var tileClass = game.posPlayer[East].BoardTiles[len(game.posPlayer[South].BoardTiles)-1].Class()
+	var tileClass = game.PosPlayer[East].BoardTiles[len(game.PosPlayer[South].BoardTiles)-1].Class()
 	if tileClass != 27 && tileClass != 28 && tileClass != 29 && tileClass != 30 {
 		return false
 	}
-	for _, player := range game.posPlayer {
+	for _, player := range game.PosPlayer {
 		if player.JunNum > 1 || player.JunNum == 0 {
 			return false
 		}
@@ -926,7 +947,7 @@ func (game *Game) judgeSuuFonRenDa() bool {
 
 func (game *Game) judgeSuuChaRiichi() bool {
 	var riiChiNum int
-	for _, player := range game.posPlayer {
+	for _, player := range game.PosPlayer {
 		if player.IsRiichi {
 			riiChiNum++
 		}
@@ -941,7 +962,7 @@ func (game *Game) judgeSuuKaiKan() bool {
 	if game.Tiles.kanNum < 4 {
 		return false
 	}
-	for _, player := range game.posPlayer {
+	for _, player := range game.PosPlayer {
 		if player.KanNum == 4 {
 			return false
 		}
@@ -965,7 +986,7 @@ func (game *Game) getOtherWinds() []Wind {
 }
 
 func (game *Game) breakIppatsu() {
-	for wind, player := range game.posPlayer {
+	for wind, player := range game.PosPlayer {
 		if wind == game.Position {
 			continue
 		}
@@ -974,14 +995,14 @@ func (game *Game) breakIppatsu() {
 }
 
 func (game *Game) breakRyuukyoku() {
-	for _, player := range game.posPlayer {
+	for _, player := range game.PosPlayer {
 		player.RyuukyokuStatus = false
 	}
 }
 
 func (game *Game) getCurrentRiichiNum() int {
 	num := 0
-	for _, player := range game.posPlayer {
+	for _, player := range game.PosPlayer {
 		if player.IsRiichi {
 			num++
 		}
@@ -995,9 +1016,9 @@ func (game *Game) judgeNagashiMangan() []Wind {
 		panic("the number of remain tiles is not 0")
 	}
 	var retSlice []Wind
-	winds := common.SortMapByKey(game.posPlayer)
+	winds := common.SortMapByKey(game.PosPlayer)
 	for _, wind := range winds {
-		player := game.posPlayer[wind]
+		player := game.PosPlayer[wind]
 		if player.judgeNagashiMangan() {
 			retSlice = append(retSlice, wind)
 		}
@@ -1006,18 +1027,18 @@ func (game *Game) judgeNagashiMangan() []Wind {
 }
 
 func (game *Game) CheckGameEnd() bool {
-	for _, player := range game.posPlayer {
+	for _, player := range game.PosPlayer {
 		if player.Points < 0 {
 			// player is bankrupt
 			return true
 		}
 	}
-	if game.WindRound < WindRound(game.rule.GameLength) {
+	if game.WindRound < WindRound(game.Rule.GameLength) {
 		return false
-	} else if game.WindRound > WindRound(game.rule.GameLength+4) || game.WindRound > WindRoundNorth4 {
+	} else if game.WindRound > WindRound(game.Rule.GameLength+4) || game.WindRound > WindRoundNorth4 {
 		return true
 	} else {
-		for _, player := range game.posPlayer {
+		for _, player := range game.PosPlayer {
 			// the first player's points over 30000
 			if player.Points >= 30000 {
 				return true
@@ -1040,17 +1061,17 @@ func (game *Game) processNagashiMangan(winds []Wind) {
 		// only one player nagashi mangan
 		wind := winds[0]
 		if wind == East {
-			game.posPlayer[East].Points += 12000 + game.NumHonba*300 + game.NumRiichi*1000
+			game.PosPlayer[East].Points += 12000 + game.NumHonba*300 + game.NumRiichi*1000
 			for _, w := range otherWinds {
-				game.posPlayer[w].Points -= 4000 + game.NumHonba*100
+				game.PosPlayer[w].Points -= 4000 + game.NumHonba*100
 			}
 		} else {
-			game.posPlayer[wind].Points += 8000 + game.NumHonba*300 + game.NumRiichi*1000
+			game.PosPlayer[wind].Points += 8000 + game.NumHonba*300 + game.NumRiichi*1000
 			for _, w := range otherWinds {
 				if w == East {
-					game.posPlayer[w].Points -= 4000 + game.NumHonba*100
+					game.PosPlayer[w].Points -= 4000 + game.NumHonba*100
 				} else {
-					game.posPlayer[w].Points -= 2000 + game.NumHonba*100
+					game.PosPlayer[w].Points -= 2000 + game.NumHonba*100
 				}
 			}
 		}
@@ -1059,19 +1080,19 @@ func (game *Game) processNagashiMangan(winds []Wind) {
 		wind0 := winds[0]
 		wind1 := winds[1]
 		if wind0 == 0 {
-			game.posPlayer[wind0].Points += 12000 - 4000 + game.NumHonba*300 + game.NumRiichi*1000
-			game.posPlayer[wind1].Points += 8000 - 4000 + game.NumHonba*300
+			game.PosPlayer[wind0].Points += 12000 - 4000 + game.NumHonba*300 + game.NumRiichi*1000
+			game.PosPlayer[wind1].Points += 8000 - 4000 + game.NumHonba*300
 			for _, w := range otherWinds {
-				game.posPlayer[w].Points -= 4000 + 2000 + game.NumHonba*300
+				game.PosPlayer[w].Points -= 4000 + 2000 + game.NumHonba*300
 			}
 		} else {
-			game.posPlayer[wind0].Points += 8000 - 2000 + game.NumHonba*300 + game.NumRiichi*1000
-			game.posPlayer[wind1].Points += 8000 - 2000 + game.NumHonba*300
+			game.PosPlayer[wind0].Points += 8000 - 2000 + game.NumHonba*300 + game.NumRiichi*1000
+			game.PosPlayer[wind1].Points += 8000 - 2000 + game.NumHonba*300
 			for _, w := range otherWinds {
 				if w == East {
-					game.posPlayer[w].Points -= 4000 + 4000 + game.NumHonba*300
+					game.PosPlayer[w].Points -= 4000 + 4000 + game.NumHonba*300
 				} else {
-					game.posPlayer[w].Points -= 2000 + 2000 + game.NumHonba*300
+					game.PosPlayer[w].Points -= 2000 + 2000 + game.NumHonba*300
 				}
 			}
 		}
@@ -1082,15 +1103,15 @@ func (game *Game) processNagashiMangan(winds []Wind) {
 		wind2 := winds[2]
 		otherWind := otherWinds[0]
 		if wind0 == 0 {
-			game.posPlayer[wind0].Points += 12000 - 4000 - 4000 + game.NumHonba*300 + game.NumRiichi*1000
-			game.posPlayer[wind1].Points += 8000 - 4000 - 2000 + game.NumHonba*300
-			game.posPlayer[wind2].Points += 8000 - 4000 - 2000 + game.NumHonba*300
-			game.posPlayer[otherWind].Points -= 4000 + 2000 + 2000 + game.NumHonba*900
+			game.PosPlayer[wind0].Points += 12000 - 4000 - 4000 + game.NumHonba*300 + game.NumRiichi*1000
+			game.PosPlayer[wind1].Points += 8000 - 4000 - 2000 + game.NumHonba*300
+			game.PosPlayer[wind2].Points += 8000 - 4000 - 2000 + game.NumHonba*300
+			game.PosPlayer[otherWind].Points -= 4000 + 2000 + 2000 + game.NumHonba*900
 		} else {
-			game.posPlayer[wind0].Points += 8000 - 2000 - 2000 + game.NumHonba*300 + game.NumRiichi*1000
-			game.posPlayer[wind1].Points += 8000 - 2000 - 2000 + game.NumHonba*300
-			game.posPlayer[wind2].Points += 8000 - 2000 - 2000 + game.NumHonba*300
-			game.posPlayer[otherWind].Points -= 4000 + 4000 + 4000 + game.NumHonba*900
+			game.PosPlayer[wind0].Points += 8000 - 2000 - 2000 + game.NumHonba*300 + game.NumRiichi*1000
+			game.PosPlayer[wind1].Points += 8000 - 2000 - 2000 + game.NumHonba*300
+			game.PosPlayer[wind2].Points += 8000 - 2000 - 2000 + game.NumHonba*300
+			game.PosPlayer[otherWind].Points -= 4000 + 4000 + 4000 + game.NumHonba*900
 		}
 	}
 }
@@ -1098,9 +1119,9 @@ func (game *Game) processNagashiMangan(winds []Wind) {
 // judgeTenHaiWinds returns the winds of players who have ten hai in the ryuukyoku situation.
 func (game *Game) judgeTenHaiWinds() []Wind {
 	var retSlice = make([]Wind, 0, 4)
-	winds := common.SortMapByKey(game.posPlayer)
+	winds := common.SortMapByKey(game.PosPlayer)
 	for _, wind := range winds {
-		player := game.posPlayer[wind]
+		player := game.PosPlayer[wind]
 		if len(player.TenhaiSlice) > 0 {
 			retSlice = append(retSlice, wind)
 		}
@@ -1125,18 +1146,18 @@ func (game *Game) processNormalRyuuKyoku(winds []Wind) {
 	if len(winds) == 1 {
 		// one player tenhai
 		wind := winds[0]
-		game.posPlayer[wind].Points += 3000
+		game.PosPlayer[wind].Points += 3000
 		for _, w := range otherWinds {
-			game.posPlayer[w].Points -= 1000
+			game.PosPlayer[w].Points -= 1000
 		}
 	} else if len(winds) == 2 {
 		// two players tenhai
 		wind0 := winds[0]
 		wind1 := winds[1]
-		game.posPlayer[wind0].Points += 1500
-		game.posPlayer[wind1].Points += 1500
+		game.PosPlayer[wind0].Points += 1500
+		game.PosPlayer[wind1].Points += 1500
 		for _, w := range otherWinds {
-			game.posPlayer[w].Points -= 1500
+			game.PosPlayer[w].Points -= 1500
 		}
 	} else {
 		// three players tenhai
@@ -1144,10 +1165,10 @@ func (game *Game) processNormalRyuuKyoku(winds []Wind) {
 		wind1 := winds[1]
 		wind2 := winds[2]
 		otherWind := otherWinds[0]
-		game.posPlayer[wind0].Points += 1000
-		game.posPlayer[wind1].Points += 1000
-		game.posPlayer[wind2].Points += 1000
-		game.posPlayer[otherWind].Points -= 3000
+		game.PosPlayer[wind0].Points += 1000
+		game.PosPlayer[wind1].Points += 1000
+		game.PosPlayer[wind2].Points += 1000
+		game.PosPlayer[otherWind].Points -= 3000
 	}
 }
 
@@ -1171,10 +1192,10 @@ func (game *Game) processRonResult(results map[Wind]*Result) {
 		} else {
 			pointsChange = result.ScoreResult.GetChanges(wind, game.Position, 0)
 		}
-		game.posPlayer[wind].Points += pointsChange.TotalWin()
+		game.PosPlayer[wind].Points += pointsChange.TotalWin()
 		totalPoints += pointsChange.TotalPayed()
 	}
-	game.posPlayer[game.Position].Points -= totalPoints
+	game.PosPlayer[game.Position].Points -= totalPoints
 }
 
 func (game *Game) addRonEvents(results map[Wind]*Result) {
@@ -1184,20 +1205,20 @@ func (game *Game) addRonEvents(results map[Wind]*Result) {
 	var posEvent = make(map[Wind]Event)
 	for wind, result := range results {
 		if result.RonCall.CallType == Ron {
-			for w := range game.posPlayer {
+			for w := range game.PosPlayer {
 				posEvent[w] = &EventRon{
 					Who:       wind,
-					HandTiles: game.posPlayer[wind].HandTiles,
+					HandTiles: game.PosPlayer[wind].HandTiles,
 					WinTile:   result.RonCall.CallTiles[0],
 					Result:    result,
 				}
 			}
 		} else {
 			// chan kan
-			for w := range game.posPlayer {
+			for w := range game.PosPlayer {
 				posEvent[w] = &EventChanKan{
 					Who:       wind,
-					HandTiles: game.posPlayer[wind].HandTiles,
+					HandTiles: game.PosPlayer[wind].HandTiles,
 					WinTile:   result.RonCall.CallTiles[0],
 					Result:    result,
 				}
@@ -1216,18 +1237,18 @@ func (game *Game) processTsumoResult(wind Wind, result *Result) {
 		}
 	}
 	pointsChange := result.ScoreResult.GetChanges(wind, wind, game.NumRiichi)
-	game.posPlayer[wind].Points += int(pointsChange.TotalWin())
+	game.PosPlayer[wind].Points += int(pointsChange.TotalWin())
 	if wind == East {
 		// dealer tsumo
 		for _, w := range otherWinds {
-			game.posPlayer[w].Points -= int(result.ScoreResult.PayTsumoDealer)
+			game.PosPlayer[w].Points -= int(result.ScoreResult.PayTsumoDealer)
 		}
 	} else {
 		for _, w := range otherWinds {
 			if w == East {
-				game.posPlayer[w].Points -= int(result.ScoreResult.PayTsumoDealer)
+				game.PosPlayer[w].Points -= int(result.ScoreResult.PayTsumoDealer)
 			} else {
-				game.posPlayer[w].Points -= int(result.ScoreResult.PayTsumo)
+				game.PosPlayer[w].Points -= int(result.ScoreResult.PayTsumo)
 			}
 		}
 	}
@@ -1239,16 +1260,16 @@ func (game *Game) GetGlobalEvents() Events {
 	events = append(events, &EventGlobalInit{
 		AllTiles:  game.Tiles.tiles,
 		WindRound: game.WindRound,
-		Seed:      game.seed,
+		Seed:      game.Seed,
 		NumGame:   game.NumGame,
 		NumHonba:  game.NumHonba,
 		NumRiichi: game.NumRiichi,
-		Rule:      game.rule,
+		Rule:      game.Rule,
 	})
 	// add all players event
 	all := 0
 	index := 0
-	winds := common.SortMapByKey(game.posPlayer)
+	winds := common.SortMapByKey(game.PosPlayer)
 	for all < 4 {
 		for _, wind := range winds {
 			es := game.posEvents[wind]
@@ -1278,11 +1299,11 @@ func (game *Game) GetGlobalEvents() Events {
 	var initPoints = make(map[Wind]int)
 	if events[len(events)-1].GetType() == EventTypeEnd {
 		for _, wind := range winds {
-			initPoints[wind] = game.posPlayer[wind].Points - events[len(events)-1].(*EventEnd).PointsChange[wind]
+			initPoints[wind] = game.PosPlayer[wind].Points - events[len(events)-1].(*EventEnd).PointsChange[wind]
 		}
 	} else {
 		for _, wind := range winds {
-			initPoints[wind] = game.posPlayer[wind].Points
+			initPoints[wind] = game.PosPlayer[wind].Points
 		}
 	}
 	events[0].(*EventGlobalInit).InitPoints = initPoints

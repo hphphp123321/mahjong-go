@@ -4,8 +4,15 @@ import (
 	"errors"
 )
 
+// ReConstructGame
+//
+//	@Description: reconstruct game from globalEvents
+//	@param playerSlice: player slice
+//	@param globalEvents: global events
+//	@return *Game
 func ReConstructGame(playerSlice []*Player, globalEvents Events) *Game {
 	game := &Game{}
+	var posCalls = make(map[Wind]Calls)
 
 	e := globalEvents[0]
 	if e.GetType() != EventTypeGlobalInit {
@@ -13,30 +20,25 @@ func ReConstructGame(playerSlice []*Player, globalEvents Events) *Game {
 	}
 	et := e.(*EventGlobalInit)
 	game.Tiles = NewMahjongTiles(nil)
-	game.Reset(playerSlice, et.AllTiles)
+	posCalls = game.Reset(playerSlice, et.AllTiles)
 	game.WindRound = et.WindRound
-	game.seed = et.Seed
+	game.Seed = et.Seed
 	game.NumGame = et.NumGame
 	game.NumHonba = et.NumHonba
 	game.NumRiichi = et.NumRiichi
-	game.rule = et.Rule
-	game.posPlayer[Wind((16-game.WindRound)%4)].Points = et.InitPoints[Wind((16-game.WindRound)%4)]
-	game.posPlayer[Wind((17-game.WindRound)%4)].Points = et.InitPoints[Wind((17-game.WindRound)%4)]
-	game.posPlayer[Wind((18-game.WindRound)%4)].Points = et.InitPoints[Wind((18-game.WindRound)%4)]
-	game.posPlayer[Wind((19-game.WindRound)%4)].Points = et.InitPoints[Wind((19-game.WindRound)%4)]
+	game.Rule = et.Rule
+	game.PosPlayer[Wind((16-game.WindRound)%4)].Points = et.InitPoints[Wind((16-game.WindRound)%4)]
+	game.PosPlayer[Wind((17-game.WindRound)%4)].Points = et.InitPoints[Wind((17-game.WindRound)%4)]
+	game.PosPlayer[Wind((18-game.WindRound)%4)].Points = et.InitPoints[Wind((18-game.WindRound)%4)]
+	game.PosPlayer[Wind((19-game.WindRound)%4)].Points = et.InitPoints[Wind((19-game.WindRound)%4)]
 
 	index := 1
-	var success = true
-	var posCalls = make(map[Wind]Calls)
 	for index < len(globalEvents) {
-		if success {
-			posCalls = game.Step()
-		}
 		var posCall = make(map[Wind]*Call)
 		if len(posCalls) == 4 {
 			return game
 		} else if len(posCalls) == 0 {
-			game.Next(posCall)
+			posCalls, _ = game.Step(posCall)
 			index++
 			continue
 		}
@@ -44,10 +46,6 @@ func ReConstructGame(playerSlice []*Player, globalEvents Events) *Game {
 		event := globalEvents[index]
 		switch event.GetType() {
 		case EventTypeGet:
-			who := event.(*EventGet).Who
-			if len(game.posPlayer[who].HandTiles) >= 14 {
-				panic(errors.New("player hand tiles more than 14"))
-			}
 			for wind := range posCalls {
 				if game.Position != wind {
 					posCall[wind] = SkipCall
@@ -55,9 +53,6 @@ func ReConstructGame(playerSlice []*Player, globalEvents Events) *Game {
 			}
 		case EventTypeDiscard:
 			who := event.(*EventDiscard).Who
-			if len(game.posPlayer[who].HandTiles) > 14 {
-				panic(errors.New("player hand tiles more than 14"))
-			}
 			calls := posCalls[who]
 			for _, call := range calls {
 				if call.CallTiles[0] == event.(*EventDiscard).Tile {
@@ -219,7 +214,7 @@ func ReConstructGame(playerSlice []*Player, globalEvents Events) *Game {
 				}
 			}
 		}
-		success = true
+		success := true
 		for wind, calls := range posCalls {
 			if _, ok := posCall[wind]; !ok {
 				success = false
@@ -237,7 +232,7 @@ func ReConstructGame(playerSlice []*Player, globalEvents Events) *Game {
 			index++
 			continue
 		}
-		game.Next(posCall)
+		posCalls, _ = game.Step(posCall)
 		index++
 	}
 

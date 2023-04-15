@@ -397,3 +397,11 @@ var MapStringToLimit = func() map[string]Limit {
 	}
 	return m
 }()
+
+type EndType int
+
+const (
+	EndTypeNone EndType = iota
+	EndTypeRound
+	EndTypeGame
+)
