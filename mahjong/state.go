@@ -2,7 +2,7 @@ package mahjong
 
 import (
 	"errors"
-	"github.com/hphphp123321/mahjong-go/common"
+	"github.com/hphphp123321/go-common"
 	"sort"
 )
 
@@ -602,7 +602,7 @@ func (s *EndState) step() map[Wind]Calls {
 				posEvent = make(map[Wind]Event)
 			}
 
-			if !common.Contain(tenhaiWinds, East) {
+			if !common.SliceContain(tenhaiWinds, East) {
 				// east not ten hai
 				s.g.nextRound = true
 			}

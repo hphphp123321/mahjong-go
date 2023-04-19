@@ -8,6 +8,7 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/facebookgo/stack v0.0.0-20160209184415-751773369052 // indirect
 	github.com/facebookgo/stackerr v0.0.0-20150612192056-c2fcf88613f4 // indirect
+	github.com/hphphp123321/go-common v0.0.0-20230419113915-7ac9d9c533b6 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/stretchr/testify v1.7.0 // indirect
 	golang.org/x/mod v0.9.0 // indirect

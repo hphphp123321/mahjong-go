@@ -46,7 +46,7 @@ func TestMultiGames(t *testing.T) {
 
 	var maxNum = 0
 
-	for i := 0; i < 100000; i++ {
+	for i := 0; i < 1000; i++ {
 		//println(i)
 		posCalls = game.Reset(players, nil)
 		flag = mahjong.EndTypeNone

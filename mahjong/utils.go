@@ -7,8 +7,6 @@ import (
 	"github.com/dnovikoff/tempai-core/yaku"
 )
 
-var YaoKyuTiles = [...]int{0, 8, 9, 17, 18, 26, 27, 28, 29, 30, 31, 32, 33}
-
 func CalculateShantenNum(handTiles Tiles, melds Calls) int {
 	instances, meldsOpt := TilesCallsToCalc(handTiles, melds)
 	res := shanten.Calculate(instances, meldsOpt)
