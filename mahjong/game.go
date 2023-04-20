@@ -1208,6 +1208,7 @@ func (game *Game) addRonEvents(results map[Wind]*Result) {
 			for w := range game.PosPlayer {
 				posEvent[w] = &EventRon{
 					Who:       wind,
+					FromWho:   result.RonCall.CallTilesFromWho[0],
 					HandTiles: game.PosPlayer[wind].HandTiles,
 					WinTile:   result.RonCall.CallTiles[0],
 					Result:    result,
@@ -1218,6 +1219,7 @@ func (game *Game) addRonEvents(results map[Wind]*Result) {
 			for w := range game.PosPlayer {
 				posEvent[w] = &EventChanKan{
 					Who:       wind,
+					FromWho:   result.RonCall.CallTilesFromWho[0],
 					HandTiles: game.PosPlayer[wind].HandTiles,
 					WinTile:   result.RonCall.CallTiles[0],
 					Result:    result,

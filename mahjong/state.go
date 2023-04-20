@@ -29,14 +29,15 @@ func (s *InitState) step() map[Wind]Calls {
 		sort.Sort(&player.HandTiles)
 		player.Wind = wind
 		posEvent[wind] = &EventStart{
-			WindRound: s.g.WindRound,
-			InitWind:  wind,
-			Seed:      s.g.Seed,
-			NumGame:   s.g.NumGame,
-			NumHonba:  s.g.NumHonba,
-			NumRiichi: s.g.NumRiichi,
-			InitTiles: initTiles[wind],
-			Rule:      s.g.Rule,
+			WindRound:         s.g.WindRound,
+			InitWind:          wind,
+			Seed:              s.g.Seed,
+			NumGame:           s.g.NumGame,
+			NumHonba:          s.g.NumHonba,
+			NumRiichi:         s.g.NumRiichi,
+			InitDoraIndicator: s.g.Tiles.GetCurrentIndicator(),
+			InitTiles:         initTiles[wind],
+			Rule:              s.g.Rule,
 		}
 	}
 	s.g.addPosEvent(posEvent)
