@@ -30,6 +30,37 @@ func TestOneGame(t *testing.T) {
 	}
 }
 
+func TestOneGameWithJsonOutput(t *testing.T) {
+	var seed int64 = 14
+
+	players := make([]*mahjong.Player, 4)
+	posCalls := make(map[mahjong.Wind]mahjong.Calls, 4)
+	posCall := make(map[mahjong.Wind]*mahjong.Call, 4)
+	var flag = mahjong.EndTypeNone
+
+	for i := 0; i < 4; i++ {
+		players[i] = mahjong.NewMahjongPlayer()
+	}
+	game := mahjong.NewMahjongGame(seed, nil)
+	r := rand.New(rand.NewSource(seed))
+	index := 0
+	posCalls = game.Reset(players, nil)
+	for flag != mahjong.EndTypeGame {
+		for wind, calls := range posCalls {
+			posCall[wind] = calls[r.Intn(len(calls))]
+		}
+		posCalls, flag = game.Step(posCall)
+		posCall = make(map[mahjong.Wind]*mahjong.Call, 4)
+		events := game.GetPosEvents(players[0].Wind, index)
+		index += len(events)
+		b, _ := json.Marshal(&events)
+		fmt.Println(string(b))
+		if len(posCalls) == 4 {
+			index = 0
+		}
+	}
+}
+
 func TestMultiGames(t *testing.T) {
 	var seed int64 = 14
 
@@ -58,6 +89,8 @@ func TestMultiGames(t *testing.T) {
 			posCalls, flag = game.Step(posCall)
 			posCall = make(map[mahjong.Wind]*mahjong.Call, 4)
 			events := game.GetPosEvents(players[0].Wind, eventIndex)
+			b, _ := json.Marshal(&events)
+			fmt.Println(string(b))
 			eventIndex += len(events)
 			if len(posCalls) == 4 {
 				for _, player := range players {

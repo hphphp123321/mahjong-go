@@ -8,13 +8,13 @@ func _() {
 	// An "invalid array index" compiler error signifies that the constant values have changed.
 	// Re-run the stringer command to generate them again.
 	var x [1]struct{}
-	_ = x[NoRyuuKyoku-0]
-	_ = x[RyuuKyokuNormal-1]
-	_ = x[RyuuKyokuKyuuShuKyuuHai-2]
-	_ = x[RyuuKyokuSuuChaRiichi-3]
-	_ = x[RyuuKyokuSuuKaiKan-4]
-	_ = x[RyuuKyokuSuufonRenda-5]
-	_ = x[RyuuKyokuSanChaHou-6]
+	_ = x[NoRyuuKyoku - -1]
+	_ = x[RyuuKyokuNormal-0]
+	_ = x[RyuuKyokuKyuuShuKyuuHai-1]
+	_ = x[RyuuKyokuSuuChaRiichi-2]
+	_ = x[RyuuKyokuSuuKaiKan-3]
+	_ = x[RyuuKyokuSuufonRenda-4]
+	_ = x[RyuuKyokuSanChaHou-5]
 }
 
 const _RyuuKyokuReason_name = "NoRyuuKyokuRyuuKyokuNormalRyuuKyokuKyuuShuKyuuHaiRyuuKyokuSuuChaRiichiRyuuKyokuSuuKaiKanRyuuKyokuSuufonRendaRyuuKyokuSanChaHou"
@@ -22,8 +22,9 @@ const _RyuuKyokuReason_name = "NoRyuuKyokuRyuuKyokuNormalRyuuKyokuKyuuShuKyuuHai
 var _RyuuKyokuReason_index = [...]uint8{0, 11, 26, 49, 70, 88, 108, 126}
 
 func (i RyuuKyokuReason) String() string {
+	i -= -1
 	if i < 0 || i >= RyuuKyokuReason(len(_RyuuKyokuReason_index)-1) {
-		return "RyuuKyokuReason(" + strconv.FormatInt(int64(i), 10) + ")"
+		return "RyuuKyokuReason(" + strconv.FormatInt(int64(i+-1), 10) + ")"
 	}
 	return _RyuuKyokuReason_name[_RyuuKyokuReason_index[i]:_RyuuKyokuReason_index[i+1]]
 }

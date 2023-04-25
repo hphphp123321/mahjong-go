@@ -2,6 +2,7 @@ package mahjong
 
 import (
 	"errors"
+	"fmt"
 	"github.com/hphphp123321/go-common"
 	"sort"
 )
@@ -215,18 +216,39 @@ func (s *DiscardState) step() map[Wind]Calls {
 	// generate discard event
 	var posEvent = make(map[Wind]Event)
 	var event Event
-	if s.tsumoGiri {
-		event = &EventTsumoGiri{
-			Who:  s.g.Position,
-			Tile: s.tileID,
-		}
-	} else {
-		event = &EventDiscard{
-			Who:  s.g.Position,
-			Tile: s.tileID,
-		}
+	var tenhaiSlice = s.g.PosPlayer[s.g.Position].TenhaiSlice
+	if len(tenhaiSlice) > 0 {
+		fmt.Println(123)
 	}
+
 	for wind := range s.g.PosPlayer {
+		if wind == s.g.Position {
+			if s.tsumoGiri {
+				event = &EventTsumoGiri{
+					Who:         s.g.Position,
+					Tile:        s.tileID,
+					TenhaiSlice: tenhaiSlice,
+				}
+			} else {
+				event = &EventDiscard{
+					Who:         s.g.Position,
+					Tile:        s.tileID,
+					TenhaiSlice: tenhaiSlice,
+				}
+			}
+		} else {
+			if s.tsumoGiri {
+				event = &EventTsumoGiri{
+					Who:  s.g.Position,
+					Tile: s.tileID,
+				}
+			} else {
+				event = &EventDiscard{
+					Who:  s.g.Position,
+					Tile: s.tileID,
+				}
+			}
+		}
 		posEvent[wind] = event
 	}
 	s.g.addPosEvent(posEvent)
