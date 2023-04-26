@@ -12,11 +12,11 @@ type BoardState struct {
 	HandTiles      Tiles     `json:"hand_tiles"`
 	ValidActions   Calls     `json:"valid_actions,omitempty"`
 	//RealActionIdx  int         `json:"action_idx"`
-	NumRemainTiles int         `json:"remain_tiles"`
-	PlayerEast     PlayerState `json:"player_east"`
-	PlayerSouth    PlayerState `json:"player_south"`
-	PlayerWest     PlayerState `json:"player_west"`
-	PlayerNorth    PlayerState `json:"player_north"`
+	NumRemainTiles int          `json:"remain_tiles"`
+	PlayerEast     *PlayerState `json:"player_east"`
+	PlayerSouth    *PlayerState `json:"player_south"`
+	PlayerWest     *PlayerState `json:"player_west"`
+	PlayerNorth    *PlayerState `json:"player_north"`
 }
 
 type PlayerState struct {
@@ -39,10 +39,10 @@ func NewBoardState() *BoardState {
 		ValidActions:   nil,
 		//RealActionIdx:  -1,
 		NumRemainTiles: -1,
-		PlayerEast:     PlayerState{},
-		PlayerSouth:    PlayerState{},
-		PlayerWest:     PlayerState{},
-		PlayerNorth:    PlayerState{},
+		PlayerEast:     &PlayerState{},
+		PlayerSouth:    &PlayerState{},
+		PlayerWest:     &PlayerState{},
+		PlayerNorth:    &PlayerState{},
 	}
 }
 
@@ -77,11 +77,11 @@ func (b *BoardState) MarshalJSON() ([]byte, error) {
 			HandTiles      Tiles  `json:"hand_tiles"`
 			ValidActions   Calls  `json:"valid_actions,omitempty"`
 			//RealActionIdx  int         `json:"action_idx"`
-			NumRemainTiles int         `json:"remain_tiles"`
-			PlayerEast     PlayerState `json:"player_east"`
-			PlayerSouth    PlayerState `json:"player_south"`
-			PlayerWest     PlayerState `json:"player_west"`
-			PlayerNorth    PlayerState `json:"player_north"`
+			NumRemainTiles int          `json:"remain_tiles"`
+			PlayerEast     *PlayerState `json:"player_east"`
+			PlayerSouth    *PlayerState `json:"player_south"`
+			PlayerWest     *PlayerState `json:"player_west"`
+			PlayerNorth    *PlayerState `json:"player_north"`
 		}{
 			WindRound:      b.WindRound.String(),
 			NumHonba:       b.NumHonba,
@@ -112,11 +112,11 @@ func (b *BoardState) UnmarshalJSON(data []byte) error {
 		HandTiles      Tiles  `json:"hand_tiles"`
 		ValidActions   Calls  `json:"valid_actions,omitempty"`
 		//RealActionIdx  int         `json:"action_idx"`
-		NumRemainTiles int         `json:"remain_tiles"`
-		PlayerEast     PlayerState `json:"player_east"`
-		PlayerSouth    PlayerState `json:"player_south"`
-		PlayerWest     PlayerState `json:"player_west"`
-		PlayerNorth    PlayerState `json:"player_north"`
+		NumRemainTiles int          `json:"remain_tiles"`
+		PlayerEast     *PlayerState `json:"player_east"`
+		PlayerSouth    *PlayerState `json:"player_south"`
+		PlayerWest     *PlayerState `json:"player_west"`
+		PlayerNorth    *PlayerState `json:"player_north"`
 	}
 	if err := json.Unmarshal(data, &tmp); err != nil {
 		return err
@@ -136,4 +136,24 @@ func (b *BoardState) UnmarshalJSON(data []byte) error {
 	b.PlayerWest = tmp.PlayerWest
 	b.PlayerNorth = tmp.PlayerNorth
 	return nil
+}
+
+func (b *BoardState) DecodeEvents(events Events) {
+	for _, e := range events {
+		switch e.GetType() {
+		case EventTypeStart:
+			b.WindRound = e.(*EventStart).WindRound
+
+		}
+	}
+}
+
+func (b *BoardState) handleEventStart(event Event) {
+	b.WindRound = event.(*EventStart).WindRound
+	b.NumHonba = event.(*EventStart).NumHonba
+	b.NumRiichi = event.(*EventStart).NumRiichi
+	b.DoraIndicators = Tiles{event.(*EventStart).InitDoraIndicator}
+	b.Position = East
+	b.PlayerWind = event.(*EventStart).InitWind
+	b.HandTiles = event.(*EventStart).InitTiles
 }

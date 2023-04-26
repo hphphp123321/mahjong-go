@@ -22,15 +22,11 @@ func TestBoardState(t *testing.T) {
 
 	posCalls = game.Reset(players, nil)
 	var flag = mahjong.EndTypeNone
-	eventIndex := 0
 	for flag != mahjong.EndTypeGame {
 		for wind, calls := range posCalls {
 			posCall[wind] = calls[rand.Intn(len(calls))]
 		}
-		posCalls, flag = game.Step(posCall)
-		posCall = make(map[mahjong.Wind]*mahjong.Call, 4)
-		eventIndex++
-		boardState := game.GetPosBoardState(mahjong.East, nil)
+		boardState := game.GetPosBoardState(mahjong.East, posCalls[mahjong.East])
 		bs, _ := json.Marshal(&boardState)
 		fmt.Println(string(bs))
 		var board mahjong.BoardState
@@ -38,5 +34,7 @@ func TestBoardState(t *testing.T) {
 		if err != nil {
 			fmt.Println("error:", err)
 		}
+		posCalls, flag = game.Step(posCall)
+		posCall = make(map[mahjong.Wind]*mahjong.Call, 4)
 	}
 }

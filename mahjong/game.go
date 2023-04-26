@@ -146,28 +146,28 @@ func (game *Game) GetPosBoardState(pos Wind, validActions Calls) (r *BoardState)
 		HandTiles:      game.PosPlayer[pos].HandTiles,
 		ValidActions:   validActions,
 		NumRemainTiles: game.Tiles.NumRemainTiles,
-		PlayerEast: PlayerState{
+		PlayerEast: &PlayerState{
 			Points:         game.PosPlayer[East].Points,
 			Melds:          game.PosPlayer[East].Melds,
 			DiscardTiles:   game.PosPlayer[East].DiscardTiles,
 			TilesTsumoGiri: game.PosPlayer[East].TilesTsumoGiri,
 			IsRiichi:       game.PosPlayer[East].IsRiichi,
 		},
-		PlayerSouth: PlayerState{
+		PlayerSouth: &PlayerState{
 			Points:         game.PosPlayer[South].Points,
 			Melds:          game.PosPlayer[South].Melds,
 			DiscardTiles:   game.PosPlayer[South].DiscardTiles,
 			TilesTsumoGiri: game.PosPlayer[South].TilesTsumoGiri,
 			IsRiichi:       game.PosPlayer[South].IsRiichi,
 		},
-		PlayerWest: PlayerState{
+		PlayerWest: &PlayerState{
 			Points:         game.PosPlayer[West].Points,
 			Melds:          game.PosPlayer[West].Melds,
 			DiscardTiles:   game.PosPlayer[West].DiscardTiles,
 			TilesTsumoGiri: game.PosPlayer[West].TilesTsumoGiri,
 			IsRiichi:       game.PosPlayer[West].IsRiichi,
 		},
-		PlayerNorth: PlayerState{
+		PlayerNorth: &PlayerState{
 			Points:         game.PosPlayer[North].Points,
 			Melds:          game.PosPlayer[North].Melds,
 			DiscardTiles:   game.PosPlayer[North].DiscardTiles,
