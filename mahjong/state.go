@@ -2,7 +2,6 @@ package mahjong
 
 import (
 	"errors"
-	"fmt"
 	"github.com/hphphp123321/go-common"
 	"sort"
 )
@@ -39,6 +38,13 @@ func (s *InitState) step() map[Wind]Calls {
 			InitDoraIndicator: s.g.Tiles.GetCurrentIndicator(),
 			InitTiles:         initTiles[wind],
 			Rule:              s.g.Rule,
+			PlayersPoints: func() map[Wind]int {
+				m := make(map[Wind]int)
+				for w, p := range s.g.PosPlayer {
+					m[w] = p.Points
+				}
+				return m
+			}(),
 		}
 	}
 	s.g.addPosEvent(posEvent)
@@ -217,9 +223,6 @@ func (s *DiscardState) step() map[Wind]Calls {
 	var posEvent = make(map[Wind]Event)
 	var event Event
 	var tenhaiSlice = s.g.PosPlayer[s.g.Position].TenhaiSlice
-	if len(tenhaiSlice) > 0 {
-		fmt.Println(123)
-	}
 
 	for wind := range s.g.PosPlayer {
 		if wind == s.g.Position {

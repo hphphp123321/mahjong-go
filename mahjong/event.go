@@ -680,6 +680,8 @@ type EventStart struct {
 	InitDoraIndicator Tile  `json:"init_dora_indicator"`
 	InitTiles         Tiles `json:"init_tiles"`
 
+	PlayersPoints map[Wind]int `json:"players_points"`
+
 	Rule *Rule `json:"rule"`
 }
 
@@ -698,6 +700,7 @@ func (event *EventStart) MarshalJSON() ([]byte, error) {
 		InitDoraIndicator string `json:"init_dora_indicator"`
 		InitTiles         Tiles  `json:"init_tiles"`
 		Rule              *Rule  `json:"rule"`
+		PlayersPoints     map[string]int
 	}{
 		WindRound:         event.WindRound.String(),
 		InitWind:          event.InitWind.String(),
@@ -708,20 +711,28 @@ func (event *EventStart) MarshalJSON() ([]byte, error) {
 		InitDoraIndicator: event.InitDoraIndicator.String(),
 		InitTiles:         event.InitTiles,
 		Rule:              event.Rule,
+		PlayersPoints: func() map[string]int {
+			m := make(map[string]int)
+			for k, v := range event.PlayersPoints {
+				m[k.String()] = v
+			}
+			return m
+		}(),
 	})
 }
 
 func (event *EventStart) UnmarshalJSON(data []byte) error {
 	var tmp struct {
-		WindRound         string `json:"wind_round"`
-		InitWind          string `json:"init_wind"`
-		Seed              int64  `json:"seed"`
-		NumGame           int    `json:"num_game"`
-		NumHonba          int    `json:"num_honba"`
-		NumRiichi         int    `json:"num_riichi"`
-		InitDoraIndicator string `json:"init_dora_indicator"`
-		InitTiles         Tiles  `json:"init_tiles"`
-		Rule              *Rule  `json:"rule"`
+		WindRound         string         `json:"wind_round"`
+		InitWind          string         `json:"init_wind"`
+		Seed              int64          `json:"seed"`
+		NumGame           int            `json:"num_game"`
+		NumHonba          int            `json:"num_honba"`
+		NumRiichi         int            `json:"num_riichi"`
+		InitDoraIndicator string         `json:"init_dora_indicator"`
+		InitTiles         Tiles          `json:"init_tiles"`
+		Rule              *Rule          `json:"rule"`
+		PlayersPoints     map[string]int `json:"players_points"`
 	}
 	if err := json.Unmarshal(data, &tmp); err != nil {
 		return err
@@ -735,6 +746,13 @@ func (event *EventStart) UnmarshalJSON(data []byte) error {
 	event.InitDoraIndicator = MapStringToTile[tmp.InitDoraIndicator]
 	event.InitTiles = tmp.InitTiles
 	event.Rule = tmp.Rule
+	event.PlayersPoints = func() map[Wind]int {
+		m := make(map[Wind]int)
+		for k, v := range tmp.PlayersPoints {
+			m[MapStringToWind[k]] = v
+		}
+		return m
+	}()
 	return nil
 }
 

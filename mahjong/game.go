@@ -136,6 +136,16 @@ func (game *Game) GetPosEvents(pos Wind, startIndex int) Events {
 //	@param pos: player wind
 //	@return r: board state
 func (game *Game) GetPosBoardState(pos Wind, validActions Calls) (r *BoardState) {
+	playerStates := make(map[Wind]*PlayerState, 4)
+	for wind, p := range game.PosPlayer {
+		playerStates[wind] = &PlayerState{
+			Points:         p.Points,
+			Melds:          p.Melds,
+			DiscardTiles:   p.DiscardTiles,
+			TilesTsumoGiri: p.TilesTsumoGiri,
+			IsRiichi:       p.IsRiichi,
+		}
+	}
 	r = &BoardState{
 		WindRound:      game.WindRound,
 		NumHonba:       game.NumHonba,
@@ -146,34 +156,7 @@ func (game *Game) GetPosBoardState(pos Wind, validActions Calls) (r *BoardState)
 		HandTiles:      game.PosPlayer[pos].HandTiles,
 		ValidActions:   validActions,
 		NumRemainTiles: game.Tiles.NumRemainTiles,
-		PlayerEast: &PlayerState{
-			Points:         game.PosPlayer[East].Points,
-			Melds:          game.PosPlayer[East].Melds,
-			DiscardTiles:   game.PosPlayer[East].DiscardTiles,
-			TilesTsumoGiri: game.PosPlayer[East].TilesTsumoGiri,
-			IsRiichi:       game.PosPlayer[East].IsRiichi,
-		},
-		PlayerSouth: &PlayerState{
-			Points:         game.PosPlayer[South].Points,
-			Melds:          game.PosPlayer[South].Melds,
-			DiscardTiles:   game.PosPlayer[South].DiscardTiles,
-			TilesTsumoGiri: game.PosPlayer[South].TilesTsumoGiri,
-			IsRiichi:       game.PosPlayer[South].IsRiichi,
-		},
-		PlayerWest: &PlayerState{
-			Points:         game.PosPlayer[West].Points,
-			Melds:          game.PosPlayer[West].Melds,
-			DiscardTiles:   game.PosPlayer[West].DiscardTiles,
-			TilesTsumoGiri: game.PosPlayer[West].TilesTsumoGiri,
-			IsRiichi:       game.PosPlayer[West].IsRiichi,
-		},
-		PlayerNorth: &PlayerState{
-			Points:         game.PosPlayer[North].Points,
-			Melds:          game.PosPlayer[North].Melds,
-			DiscardTiles:   game.PosPlayer[North].DiscardTiles,
-			TilesTsumoGiri: game.PosPlayer[North].TilesTsumoGiri,
-			IsRiichi:       game.PosPlayer[North].IsRiichi,
-		},
+		PlayerStates:   playerStates,
 	}
 	return r
 }
