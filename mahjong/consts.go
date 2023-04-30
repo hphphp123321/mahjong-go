@@ -25,7 +25,7 @@ type WindRound int
 
 //go:generate stringer -type=WindRound
 const (
-	WindRoundDummy WindRound = -1 + iota
+	WindRoundDummy WindRound = iota
 	WindRoundEast1
 	WindRoundEast2
 	WindRoundEast3
@@ -118,7 +118,7 @@ type RyuuKyokuReason int
 
 //go:generate stringer -type=RyuuKyokuReason
 const (
-	NoRyuuKyoku RyuuKyokuReason = iota
+	NoRyuuKyoku RyuuKyokuReason = iota - 1
 	RyuuKyokuNormal
 	RyuuKyokuKyuuShuKyuuHai
 	RyuuKyokuSuuChaRiichi
@@ -139,7 +139,7 @@ type FuritenReason int
 
 //go:generate stringer -type=FuritenReason
 const (
-	FuritenNone FuritenReason = iota
+	FuritenNone FuritenReason = iota - 1
 	FuritenJun
 	FuritenDiscard
 	FuritenRiichi
@@ -356,6 +356,8 @@ var MapStringToTileClass = func() map[string]TileClass {
 	return m
 }()
 
+var YaoKyuTileClasses = TileClasses{0, 8, 9, 17, 18, 26, 27, 28, 29, 30, 31, 32, 33}
+
 var TileClassMap = map[Tile]TileClass{0: 0, 1: 0, 2: 0, 3: 0, 4: 1, 5: 1, 6: 1, 7: 1, 8: 2, 9: 2, 10: 2, 11: 2, 12: 3,
 	13: 3, 14: 3, 15: 3, 16: 34, 17: 4, 18: 4, 19: 4, 20: 5, 21: 5, 22: 5, 23: 5, 24: 6, 25: 6, 26: 6, 27: 6, 28: 7,
 	29: 7, 30: 7, 31: 7, 32: 8, 33: 8, 34: 8, 35: 8, 36: 9, 37: 9, 38: 9, 39: 9, 40: 10, 41: 10, 42: 10, 43: 10,
@@ -382,12 +384,12 @@ type Limit int
 
 //go:generate stringer -type=Limit
 const (
-	LimitNone      Limit = 0
-	LimitMangan    Limit = 1
-	LimitHaneman   Limit = 2
-	LimitBaiman    Limit = 3
-	LimitSanbaiman Limit = 4
-	LimitYakuman   Limit = 5
+	LimitNone Limit = iota
+	LimitMangan
+	LimitHaneman
+	LimitBaiman
+	LimitSanbaiman
+	LimitYakuman
 )
 
 var MapStringToLimit = func() map[string]Limit {

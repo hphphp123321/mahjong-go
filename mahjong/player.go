@@ -1,7 +1,7 @@
 package mahjong
 
 import (
-	"github.com/hphphp123321/mahjong-go/common"
+	"github.com/hphphp123321/go-common"
 	"sort"
 )
 
@@ -17,7 +17,7 @@ type Player struct {
 	Melds           Calls
 	TenhaiTiles     Tiles
 	ShantenNum      int
-	TenhaiSlice     []TileClass
+	TenhaiSlice     TileClasses
 	JunFuriten      bool
 	DiscardFuriten  bool
 	RiichiFuriten   bool
@@ -92,7 +92,7 @@ func (player *Player) IsNagashiMangan() bool {
 		return false
 	}
 	for _, tileID := range player.DiscardTiles {
-		if !common.Contain(tileID, YaoKyuTiles) {
+		if !common.SliceContain(YaoKyuTileClasses, tileID.Class()) {
 			return false
 		}
 	}
@@ -144,7 +144,7 @@ func (player *Player) judgeNagashiMangan() bool {
 		return false
 	}
 	for _, tileID := range player.DiscardTiles {
-		if !common.Contain(tileID/4, YaoKyuTiles) {
+		if !common.SliceContain(YaoKyuTileClasses, tileID.Class()) {
 			return false
 		}
 	}

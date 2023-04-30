@@ -4,7 +4,7 @@ import (
 	"github.com/dnovikoff/tempai-core/compact"
 	"github.com/dnovikoff/tempai-core/hand/calc"
 	"github.com/dnovikoff/tempai-core/tile"
-	"github.com/hphphp123321/mahjong-go/common"
+	common "github.com/hphphp123321/go-common"
 )
 
 func IntToInstance(t int) tile.Instance {

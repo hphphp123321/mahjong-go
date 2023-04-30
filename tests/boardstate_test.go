@@ -9,7 +9,7 @@ import (
 )
 
 func TestBoardState(t *testing.T) {
-	var seed int64 = 14
+	var seed = rand.Int63()
 
 	players := make([]*mahjong.Player, 4)
 	posCalls := make(map[mahjong.Wind]mahjong.Calls, 4)
@@ -22,21 +22,30 @@ func TestBoardState(t *testing.T) {
 
 	posCalls = game.Reset(players, nil)
 	var flag = mahjong.EndTypeNone
-	eventIndex := 0
 	for flag != mahjong.EndTypeGame {
 		for wind, calls := range posCalls {
 			posCall[wind] = calls[rand.Intn(len(calls))]
 		}
-		posCalls, flag = game.Step(posCall)
-		posCall = make(map[mahjong.Wind]*mahjong.Call, 4)
-		eventIndex++
-		boardState := game.GetPosBoardState(mahjong.East, nil)
+		boardState := game.GetPosBoardState(mahjong.East, posCalls[mahjong.East])
+		events := game.GetPosEvents(mahjong.East, 0)
+
+		if flag != mahjong.EndTypeRound {
+			nb := mahjong.NewBoardState()
+			nb.DecodeEvents(events)
+			if !boardState.Equal(nb) {
+				panic("boardState not equal")
+			}
+		}
+
+		// test json
 		bs, _ := json.Marshal(&boardState)
-		fmt.Println(string(bs))
+		//fmt.Println(string(bs))
 		var board mahjong.BoardState
 		err := json.Unmarshal(bs, &board)
 		if err != nil {
 			fmt.Println("error:", err)
 		}
+		posCalls, flag = game.Step(posCall)
+		posCall = make(map[mahjong.Wind]*mahjong.Call, 4)
 	}
 }

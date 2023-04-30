@@ -8,10 +8,10 @@ func _() {
 	// An "invalid array index" compiler error signifies that the constant values have changed.
 	// Re-run the stringer command to generate them again.
 	var x [1]struct{}
-	_ = x[FuritenNone-0]
-	_ = x[FuritenJun-1]
-	_ = x[FuritenDiscard-2]
-	_ = x[FuritenRiichi-3]
+	_ = x[FuritenNone - -1]
+	_ = x[FuritenJun-0]
+	_ = x[FuritenDiscard-1]
+	_ = x[FuritenRiichi-2]
 }
 
 const _FuritenReason_name = "FuritenNoneFuritenJunFuritenDiscardFuritenRiichi"
@@ -19,8 +19,9 @@ const _FuritenReason_name = "FuritenNoneFuritenJunFuritenDiscardFuritenRiichi"
 var _FuritenReason_index = [...]uint8{0, 11, 21, 35, 48}
 
 func (i FuritenReason) String() string {
+	i -= -1
 	if i < 0 || i >= FuritenReason(len(_FuritenReason_index)-1) {
-		return "FuritenReason(" + strconv.FormatInt(int64(i), 10) + ")"
+		return "FuritenReason(" + strconv.FormatInt(int64(i+-1), 10) + ")"
 	}
 	return _FuritenReason_name[_FuritenReason_index[i]:_FuritenReason_index[i+1]]
 }

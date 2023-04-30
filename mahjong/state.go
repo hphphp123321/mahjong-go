@@ -2,7 +2,7 @@ package mahjong
 
 import (
 	"errors"
-	"github.com/hphphp123321/mahjong-go/common"
+	"github.com/hphphp123321/go-common"
 	"sort"
 )
 
@@ -29,14 +29,22 @@ func (s *InitState) step() map[Wind]Calls {
 		sort.Sort(&player.HandTiles)
 		player.Wind = wind
 		posEvent[wind] = &EventStart{
-			WindRound: s.g.WindRound,
-			InitWind:  wind,
-			Seed:      s.g.Seed,
-			NumGame:   s.g.NumGame,
-			NumHonba:  s.g.NumHonba,
-			NumRiichi: s.g.NumRiichi,
-			InitTiles: initTiles[wind],
-			Rule:      s.g.Rule,
+			WindRound:         s.g.WindRound,
+			InitWind:          wind,
+			Seed:              s.g.Seed,
+			NumGame:           s.g.NumGame,
+			NumHonba:          s.g.NumHonba,
+			NumRiichi:         s.g.NumRiichi,
+			InitDoraIndicator: s.g.Tiles.GetCurrentIndicator(),
+			InitTiles:         initTiles[wind],
+			Rule:              s.g.Rule,
+			PlayersPoints: func() map[Wind]int {
+				m := make(map[Wind]int)
+				for w, p := range s.g.PosPlayer {
+					m[w] = p.Points
+				}
+				return m
+			}(),
 		}
 	}
 	s.g.addPosEvent(posEvent)
@@ -214,18 +222,36 @@ func (s *DiscardState) step() map[Wind]Calls {
 	// generate discard event
 	var posEvent = make(map[Wind]Event)
 	var event Event
-	if s.tsumoGiri {
-		event = &EventTsumoGiri{
-			Who:  s.g.Position,
-			Tile: s.tileID,
-		}
-	} else {
-		event = &EventDiscard{
-			Who:  s.g.Position,
-			Tile: s.tileID,
-		}
-	}
+	var tenhaiSlice = s.g.PosPlayer[s.g.Position].TenhaiSlice
+
 	for wind := range s.g.PosPlayer {
+		if wind == s.g.Position {
+			if s.tsumoGiri {
+				event = &EventTsumoGiri{
+					Who:         s.g.Position,
+					Tile:        s.tileID,
+					TenhaiSlice: tenhaiSlice,
+				}
+			} else {
+				event = &EventDiscard{
+					Who:         s.g.Position,
+					Tile:        s.tileID,
+					TenhaiSlice: tenhaiSlice,
+				}
+			}
+		} else {
+			if s.tsumoGiri {
+				event = &EventTsumoGiri{
+					Who:  s.g.Position,
+					Tile: s.tileID,
+				}
+			} else {
+				event = &EventDiscard{
+					Who:  s.g.Position,
+					Tile: s.tileID,
+				}
+			}
+		}
 		posEvent[wind] = event
 	}
 	s.g.addPosEvent(posEvent)
@@ -602,7 +628,7 @@ func (s *EndState) step() map[Wind]Calls {
 				posEvent = make(map[Wind]Event)
 			}
 
-			if !common.Contain(tenhaiWinds, East) {
+			if !common.SliceContain(tenhaiWinds, East) {
 				// east not ten hai
 				s.g.nextRound = true
 			}

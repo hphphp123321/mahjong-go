@@ -8,23 +8,23 @@ func _() {
 	// An "invalid array index" compiler error signifies that the constant values have changed.
 	// Re-run the stringer command to generate them again.
 	var x [1]struct{}
-	_ = x[WindRoundDummy - -1]
-	_ = x[WindRoundEast1-0]
-	_ = x[WindRoundEast2-1]
-	_ = x[WindRoundEast3-2]
-	_ = x[WindRoundEast4-3]
-	_ = x[WindRoundSouth1-4]
-	_ = x[WindRoundSouth2-5]
-	_ = x[WindRoundSouth3-6]
-	_ = x[WindRoundSouth4-7]
-	_ = x[WindRoundWest1-8]
-	_ = x[WindRoundWest2-9]
-	_ = x[WindRoundWest3-10]
-	_ = x[WindRoundWest4-11]
-	_ = x[WindRoundNorth1-12]
-	_ = x[WindRoundNorth2-13]
-	_ = x[WindRoundNorth3-14]
-	_ = x[WindRoundNorth4-15]
+	_ = x[WindRoundDummy-0]
+	_ = x[WindRoundEast1-1]
+	_ = x[WindRoundEast2-2]
+	_ = x[WindRoundEast3-3]
+	_ = x[WindRoundEast4-4]
+	_ = x[WindRoundSouth1-5]
+	_ = x[WindRoundSouth2-6]
+	_ = x[WindRoundSouth3-7]
+	_ = x[WindRoundSouth4-8]
+	_ = x[WindRoundWest1-9]
+	_ = x[WindRoundWest2-10]
+	_ = x[WindRoundWest3-11]
+	_ = x[WindRoundWest4-12]
+	_ = x[WindRoundNorth1-13]
+	_ = x[WindRoundNorth2-14]
+	_ = x[WindRoundNorth3-15]
+	_ = x[WindRoundNorth4-16]
 }
 
 const _WindRound_name = "WindRoundDummyWindRoundEast1WindRoundEast2WindRoundEast3WindRoundEast4WindRoundSouth1WindRoundSouth2WindRoundSouth3WindRoundSouth4WindRoundWest1WindRoundWest2WindRoundWest3WindRoundWest4WindRoundNorth1WindRoundNorth2WindRoundNorth3WindRoundNorth4"
@@ -32,9 +32,8 @@ const _WindRound_name = "WindRoundDummyWindRoundEast1WindRoundEast2WindRoundEast
 var _WindRound_index = [...]uint8{0, 14, 28, 42, 56, 70, 85, 100, 115, 130, 144, 158, 172, 186, 201, 216, 231, 246}
 
 func (i WindRound) String() string {
-	i -= -1
 	if i < 0 || i >= WindRound(len(_WindRound_index)-1) {
-		return "WindRound(" + strconv.FormatInt(int64(i+-1), 10) + ")"
+		return "WindRound(" + strconv.FormatInt(int64(i), 10) + ")"
 	}
 	return _WindRound_name[_WindRound_index[i]:_WindRound_index[i+1]]
 }
