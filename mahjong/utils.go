@@ -59,3 +59,24 @@ func GetYakuResult(handTiles Tiles, melds Calls, ctx *yaku.Context) *yaku.Result
 func GetScoreResult(scoreRule *score.RulesStruct, yakuResult *yaku.Result, honba int) score.Score {
 	return score.GetScoreByResult(scoreRule, yakuResult, score.Honba(honba))
 }
+
+func divideIntoLines(s string, lines int) []string {
+	runes := []rune(s)
+	length := len(runes)
+	elementsPerLine := 12
+
+	result := make([]string, lines)
+	for i := 0; i < lines; i++ {
+		line := ""
+		for j := 0; j < elementsPerLine; j++ {
+			index := i*elementsPerLine + j
+			if index < length {
+				line += string(runes[index])
+			} else {
+				line += " "
+			}
+		}
+		result[i] = line
+	}
+	return result
+}

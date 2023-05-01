@@ -14,16 +14,29 @@ func (tile Tile) Class() TileClass {
 }
 
 func (tile Tile) UTF8() string {
-	return TileClassUTF[TileClass(tile/4)]
+	return TileClassUTF[TileClassMap[tile]]
 }
 
 type Tiles []Tile
 
+func (tiles *Tiles) UTF8() string {
+	var s string
+	for i, tile := range *tiles {
+		if i != 0 {
+			s += " "
+		}
+		s += TileClassUTF[TileClassMap[tile]]
+	}
+	return s
+}
+
 func (tiles *Tiles) String() string {
 	var s string
-	for _, tile := range *tiles {
-		//s += tile.String()
-		s += TileClassUTF[TileClassMap[tile]] + " "
+	for i, tile := range *tiles {
+		if i != 0 {
+			s += " "
+		}
+		s += tile.String()
 	}
 	return s
 }

@@ -65,6 +65,14 @@ func (call *Call) Copy() *Call {
 	}
 }
 
+func (call *Call) String() string {
+	return call.CallTiles.String()
+}
+
+func (call *Call) UTF8() string {
+	return call.CallTiles.UTF8()
+}
+
 func NewCall(meldType CallType, CallTiles Tiles, CallTilesFromWho []Wind) *Call {
 	return &Call{
 		CallType:         meldType,
@@ -105,6 +113,22 @@ func (calls *Calls) Append(call *Call) {
 func (calls *Calls) Remove(call *Call) {
 	idx := calls.Index(call)
 	*calls = append((*calls)[:idx], (*calls)[idx+1:]...)
+}
+
+func (calls *Calls) String() string {
+	var str string
+	for _, call := range *calls {
+		str += call.String() + ","
+	}
+	return str
+}
+
+func (calls *Calls) UTF8() string {
+	var str string
+	for _, call := range *calls {
+		str += call.UTF8() + ","
+	}
+	return str
 }
 
 var SkipCall = NewCall(Skip, nil, nil)

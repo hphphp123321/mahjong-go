@@ -2,20 +2,21 @@ package mahjong
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/hphphp123321/go-common"
 	"sort"
+	"strings"
 )
 
 type BoardState struct {
-	WindRound      WindRound `json:"wind_round"`
-	NumHonba       int       `json:"num_honba"`
-	NumRiichi      int       `json:"num_riichi"`
-	DoraIndicators Tiles     `json:"dora_indicators"`
-	PlayerWind     Wind      `json:"player_wind"`
-	Position       Wind      `json:"position"`
-	HandTiles      Tiles     `json:"hand_tiles"`
-	ValidActions   Calls     `json:"valid_actions,omitempty"`
-	//RealActionIdx  int         `json:"action_idx"`
+	WindRound      WindRound             `json:"wind_round"`
+	NumHonba       int                   `json:"num_honba"`
+	NumRiichi      int                   `json:"num_riichi"`
+	DoraIndicators Tiles                 `json:"dora_indicators"`
+	PlayerWind     Wind                  `json:"player_wind"`
+	Position       Wind                  `json:"position"`
+	HandTiles      Tiles                 `json:"hand_tiles"`
+	ValidActions   Calls                 `json:"valid_actions,omitempty"`
 	NumRemainTiles int                   `json:"remain_tiles"`
 	PlayerStates   map[Wind]*PlayerState `json:"player_states"`
 }
@@ -38,31 +39,30 @@ func NewBoardState() *BoardState {
 		Position:       -1,
 		HandTiles:      make(Tiles, 0, 14),
 		ValidActions:   nil,
-		//RealActionIdx:  -1,
 		NumRemainTiles: -1,
 		PlayerStates: map[Wind]*PlayerState{
-			East: &PlayerState{
+			East: {
 				Points:         25000,
 				Melds:          make(Calls, 0, 4),
 				DiscardTiles:   make(Tiles, 0, 25),
 				TilesTsumoGiri: make([]bool, 0, 25),
 				IsRiichi:       false,
 			},
-			South: &PlayerState{
+			South: {
 				Points:         25000,
 				Melds:          make(Calls, 0, 4),
 				DiscardTiles:   make(Tiles, 0, 25),
 				TilesTsumoGiri: make([]bool, 0, 25),
 				IsRiichi:       false,
 			},
-			West: &PlayerState{
+			West: {
 				Points:         25000,
 				Melds:          make(Calls, 0, 4),
 				DiscardTiles:   make(Tiles, 0, 25),
 				TilesTsumoGiri: make([]bool, 0, 25),
 				IsRiichi:       false,
 			},
-			North: &PlayerState{
+			North: {
 				Points:         25000,
 				Melds:          make(Calls, 0, 4),
 				DiscardTiles:   make(Tiles, 0, 25),
@@ -71,6 +71,101 @@ func NewBoardState() *BoardState {
 			},
 		},
 	}
+}
+
+func (b *BoardState) Reset() {
+	b.WindRound = -1
+	b.NumHonba = -1
+	b.NumRiichi = -1
+	b.DoraIndicators = make(Tiles, 0, 5)
+	b.PlayerWind = -1
+	b.Position = -1
+	b.HandTiles = make(Tiles, 0, 14)
+	b.ValidActions = nil
+	b.NumRemainTiles = -1
+	b.PlayerStates = map[Wind]*PlayerState{
+		East: {
+			Points:         25000,
+			Melds:          make(Calls, 0, 4),
+			DiscardTiles:   make(Tiles, 0, 25),
+			TilesTsumoGiri: make([]bool, 0, 25),
+			IsRiichi:       false,
+		},
+		South: {
+			Points:         25000,
+			Melds:          make(Calls, 0, 4),
+			DiscardTiles:   make(Tiles, 0, 25),
+			TilesTsumoGiri: make([]bool, 0, 25),
+			IsRiichi:       false,
+		},
+		West: {
+			Points:         25000,
+			Melds:          make(Calls, 0, 4),
+			DiscardTiles:   make(Tiles, 0, 25),
+			TilesTsumoGiri: make([]bool, 0, 25),
+			IsRiichi:       false,
+		},
+		North: {
+			Points:         25000,
+			Melds:          make(Calls, 0, 4),
+			DiscardTiles:   make(Tiles, 0, 25),
+			TilesTsumoGiri: make([]bool, 0, 25),
+			IsRiichi:       false,
+		},
+	}
+}
+
+func (b *BoardState) UTF8() string {
+	var s strings.Builder
+
+	// 顶部边框
+	s.WriteString(" ______________________________________________________________________________________________________________________________________________________________________________\n")
+
+	// 顶部玩家信息
+	topPlayer := b.PlayerStates[(b.Position+2)%4]
+	s.WriteString(fmt.Sprintf("|                                                     Discards: %-72s \n", topPlayer.DiscardTiles.UTF8()))
+	s.WriteString(fmt.Sprintf("|                                                     Melds: %-72s \n", topPlayer.Melds.UTF8()))
+	s.WriteString(fmt.Sprintf("|                                                     Points: %-72d \n", topPlayer.Points))
+	s.WriteString(fmt.Sprintf("|                                                     Riichi: %-72t \n", topPlayer.IsRiichi))
+
+	s.WriteString("|______________________________________________________________________________________________________________________________________________________________________________\n")
+
+	// 左侧玩家信息、中间信息和右侧玩家信息
+	leftPlayer := b.PlayerStates[(b.Position+3)%4]
+	rightPlayer := b.PlayerStates[(b.Position+1)%4]
+	leftPlayerDiscards := divideIntoLines(leftPlayer.DiscardTiles.UTF8(), 4)
+	rightPlayerDiscards := divideIntoLines(rightPlayer.DiscardTiles.UTF8(), 4)
+
+	middleLines := []string{
+		fmt.Sprintf("Wind Round: %s  Num Honba: %d  Num Riichi: %d", b.WindRound, b.NumHonba, b.NumRiichi),
+		fmt.Sprintf("Player Wind: %s  Position: %s", b.PlayerWind, b.Position),
+		fmt.Sprintf("Dora Indicators: %s", b.DoraIndicators.UTF8()),
+		fmt.Sprintf("Num Remaining Tiles: %d", b.NumRemainTiles),
+	}
+
+	for i := 0; i < 4; i++ {
+		s.WriteString(fmt.Sprintf("| L Discards: %-30s | %-81s | R Discards: %-23s \n", leftPlayerDiscards[i], middleLines[i], rightPlayerDiscards[i]))
+	}
+
+	s.WriteString(fmt.Sprintf("| L Melds: %-30s | %-81s | R Melds: %-27s \n", leftPlayer.Melds.UTF8(), " ", rightPlayer.Melds.UTF8()))
+	s.WriteString(fmt.Sprintf("| L Points: %-30d | %-81s | R Points: %-26d \n", leftPlayer.Points, " ", rightPlayer.Points))
+	s.WriteString(fmt.Sprintf("| L Riichi: %-32t | %-81s | R Riichi: %-26t \n", leftPlayer.IsRiichi, " ", rightPlayer.IsRiichi))
+
+	s.WriteString("|______________________________________________________________________________________________________________________________________________________________________________\n")
+	// 底部玩家信息
+	bottomPlayer := b.PlayerStates[b.Position]
+	s.WriteString(fmt.Sprintf("|                                                     Discards: %-72s \n", bottomPlayer.DiscardTiles.UTF8()))
+	s.WriteString(fmt.Sprintf("|                                                     Melds: %-75s \n", bottomPlayer.Melds.UTF8()))
+	s.WriteString(fmt.Sprintf("|                                                     Points: %-73d \n", bottomPlayer.Points))
+	s.WriteString(fmt.Sprintf("|                                                     Riichi: %-73t \n", bottomPlayer.IsRiichi))
+
+	// 手牌信息
+	s.WriteString(fmt.Sprintf("|                                                     Hand Tiles: %-68s \n", b.HandTiles.UTF8()))
+
+	// 底部边框
+	s.WriteString(" ______________________________________________________________________________________________________________________________________________________________________________\n")
+
+	return s.String()
 }
 
 func BoardStateCopy(boardState *BoardState) *BoardState {

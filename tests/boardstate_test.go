@@ -28,6 +28,7 @@ func TestBoardState(t *testing.T) {
 		}
 		boardState := game.GetPosBoardState(mahjong.East, posCalls[mahjong.East])
 		events := game.GetPosEvents(mahjong.East, 0)
+		println(boardState.UTF8())
 
 		if flag != mahjong.EndTypeRound {
 			nb := mahjong.NewBoardState()
