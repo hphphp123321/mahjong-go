@@ -266,8 +266,8 @@ func (game *Game) JudgeDiscardCall(pMain *Player) Calls {
 	for _, tile := range discardableSlice {
 		call := Call{
 			CallType:         Discard,
-			CallTiles:        Tiles{tile, -1, -1, -1},
-			CallTilesFromWho: []Wind{pMain.Wind, -1, -1, -1},
+			CallTiles:        Tiles{tile, TileDummy, TileDummy, TileDummy},
+			CallTilesFromWho: []Wind{pMain.Wind, WindDummy, WindDummy, WindDummy},
 		}
 		validCalls = append(validCalls, &call)
 	}
@@ -493,7 +493,7 @@ func (game *Game) judgeRon(pMain *Player, tileID Tile) Calls {
 	}
 	return Calls{&Call{
 		CallType:         Ron,
-		CallTiles:        Tiles{tileID, -1, -1, -1},
+		CallTiles:        Tiles{tileID, TileDummy, TileDummy, TileDummy},
 		CallTilesFromWho: []Wind{game.Tiles.allTiles[tileID].discardWind, WindDummy, WindDummy, WindDummy},
 	}}
 }
@@ -516,7 +516,7 @@ func (game *Game) judgeChanKan(pMain *Player, tileID Tile, isAnKan bool) Calls {
 	}
 	return Calls{&Call{
 		CallType:         ChanKan,
-		CallTiles:        Tiles{tileID, -1, -1, -1},
+		CallTiles:        Tiles{tileID, TileDummy, TileDummy, TileDummy},
 		CallTilesFromWho: []Wind{WindDummy, WindDummy, WindDummy, WindDummy},
 	}}
 }
@@ -551,7 +551,7 @@ func (game *Game) judgeTsumo(pMain *Player) Calls {
 	}
 	return Calls{&Call{
 		CallType:         Tsumo,
-		CallTiles:        Tiles{winTile, -1, -1, -1},
+		CallTiles:        Tiles{winTile, TileDummy, TileDummy, TileDummy},
 		CallTilesFromWho: []Wind{pMain.Wind, WindDummy, WindDummy, WindDummy},
 	}}
 }
@@ -572,7 +572,7 @@ func (game *Game) judgeRiichi(pMain *Player) Calls {
 	for _, tileID := range tiles {
 		riichiCalls = append(riichiCalls, &Call{
 			CallType:         Riichi,
-			CallTiles:        Tiles{tileID, -1, -1, -1},
+			CallTiles:        Tiles{tileID, TileDummy, TileDummy, TileDummy},
 			CallTilesFromWho: []Wind{pMain.Wind, WindDummy, WindDummy, WindDummy},
 		})
 	}
@@ -623,33 +623,33 @@ func (game *Game) judgeChi(pMain *Player, tileID Tile) Calls {
 		tile1ID := pMain.HandTiles[tile1Idx1]
 		tile2Idx1 := handTilesClass.Index(tile2Class, 0)
 		tile2ID := pMain.HandTiles[tile2Idx1]
-		posCall := Call{
+		posCall := &Call{
 			CallType:         Chi,
-			CallTiles:        Tiles{tile1ID, tile2ID, tileID, -1},
+			CallTiles:        Tiles{tile1ID, tile2ID, tileID, TileDummy},
 			CallTilesFromWho: []Wind{pMain.Wind, pMain.Wind, discardWind, WindDummy},
 		}
-		posCalls.Append(&posCall)
+		posCalls.Append(posCall)
 		if common.SliceContain(Tiles{16, 52, 88}, tile1ID) {
 			tile1Idx2 := handTilesClass.Index(tile1Class, tile1Idx1+1)
 			if tile1Idx2 != -1 {
 				tile1ID = pMain.HandTiles[tile1Idx2]
-				posCall = Call{
+				posCall = &Call{
 					CallType:         Chi,
-					CallTiles:        Tiles{tile1ID, tile2ID, tileID, -1},
+					CallTiles:        Tiles{tile1ID, tile2ID, tileID, TileDummy},
 					CallTilesFromWho: []Wind{pMain.Wind, pMain.Wind, discardWind, WindDummy},
 				}
-				posCalls.Append(&posCall)
+				posCalls.Append(posCall)
 			}
 		} else if common.SliceContain(Tiles{16, 52, 88}, tile2ID) {
 			tile2Idx2 := handTilesClass.Index(tile2Class, tile2Idx1+1)
 			if tile2Idx2 != -1 {
 				tile2ID = pMain.HandTiles[tile2Idx2]
-				posCall = Call{
+				posCall = &Call{
 					CallType:         Chi,
-					CallTiles:        Tiles{tile1ID, tile2ID, tileID, -1},
+					CallTiles:        Tiles{tile1ID, tile2ID, tileID, TileDummy},
 					CallTilesFromWho: []Wind{pMain.Wind, pMain.Wind, discardWind, WindDummy},
 				}
-				posCalls.Append(&posCall)
+				posCalls.Append(posCall)
 			}
 		}
 	}
@@ -712,12 +712,12 @@ func (game *Game) judgePon(pMain *Player, tileID Tile) Calls {
 	tile1ID := pMain.HandTiles[tile1Idx]
 	tile2Idx := tilesClass.Index(ponClass, tile1Idx+1)
 	tile2ID := pMain.HandTiles[tile2Idx]
-	posCall := Call{
+	posCall := &Call{
 		CallType:         Pon,
 		CallTiles:        Tiles{tile1ID, tile2ID, tileID, -1},
 		CallTilesFromWho: []Wind{pMain.Wind, pMain.Wind, discardWind, WindDummy},
 	}
-	posCalls = append(posCalls, &posCall)
+	posCalls.Append(posCall)
 	if tileCount == 3 {
 		tile3Idx := tilesClass.Index(ponClass, tile2Idx+1)
 		if tile3Idx == -1 {
@@ -725,26 +725,26 @@ func (game *Game) judgePon(pMain *Player, tileID Tile) Calls {
 		}
 		tile3ID := pMain.HandTiles[tile3Idx]
 		if common.SliceContain(Tiles{16, 52, 88}, tile1ID) {
-			posCall = Call{
+			posCall = &Call{
 				CallType:         Pon,
 				CallTiles:        Tiles{tile2ID, tile3ID, tileID, -1},
 				CallTilesFromWho: []Wind{pMain.Wind, pMain.Wind, discardWind, WindDummy},
 			}
-			posCalls = append(posCalls, &posCall)
+			posCalls.Append(posCall)
 		} else if common.SliceContain(Tiles{16, 52, 88}, tile2ID) {
-			posCall = Call{
+			posCall = &Call{
 				CallType:         Pon,
 				CallTiles:        Tiles{tile1ID, tile3ID, tileID, -1},
 				CallTilesFromWho: []Wind{pMain.Wind, pMain.Wind, discardWind, WindDummy},
 			}
-			posCalls = append(posCalls, &posCall)
+			posCalls.Append(posCall)
 		} else if common.SliceContain(Tiles{16, 52, 88}, tile3ID) {
-			posCall = Call{
+			posCall = &Call{
 				CallType:         Pon,
 				CallTiles:        Tiles{tile1ID, tile3ID, tileID, -1},
 				CallTilesFromWho: []Wind{pMain.Wind, pMain.Wind, discardWind, WindDummy},
 			}
-			posCalls = append(posCalls, &posCall)
+			posCalls.Append(posCall)
 		}
 	}
 	return posCalls
@@ -772,12 +772,12 @@ func (game *Game) judgeDaiMinKan(pMain *Player, tileID Tile) Calls {
 		return make(Calls, 0)
 	}
 	var posCalls Calls
-	posCall := Call{
+	posCall := &Call{
 		CallType:         DaiMinKan,
 		CallTiles:        Tiles{tile0, tile1, tile2, tileID},
 		CallTilesFromWho: []Wind{pMain.Wind, pMain.Wind, pMain.Wind, discardWind},
 	}
-	posCalls = append(posCalls, &posCall)
+	posCalls.Append(posCall)
 	return posCalls
 }
 
@@ -801,7 +801,7 @@ func (game *Game) judgeAnKan(pMain *Player) Calls {
 			if a == -1 || b == -1 || c == -1 || d == -1 {
 				panic("index error")
 			}
-			posCall := Call{
+			posCall := &Call{
 				CallType:         AnKan,
 				CallTiles:        Tiles{pMain.HandTiles[a], pMain.HandTiles[b], pMain.HandTiles[c], pMain.HandTiles[d]},
 				CallTilesFromWho: []Wind{pMain.Wind, pMain.Wind, pMain.Wind, pMain.Wind},
@@ -815,13 +815,14 @@ func (game *Game) judgeAnKan(pMain *Player) Calls {
 				// if a riichi player's tenhai changed after ankan, then this ankan is not valid
 				tenhaiSlice := pMain.TenhaiSlice
 				tmpHandTiles := common.RemoveIndex(pMain.HandTiles, a, b, c, d)
-				melds := Calls{&posCall}
+				melds := pMain.Melds.Copy()
+				melds.Append(posCall)
 				tenhaiSliceAfterKan := GetTenhaiSlice(tmpHandTiles, melds)
 				if !common.SliceEqual(tenhaiSlice, tenhaiSliceAfterKan) {
 					continue
 				}
 			}
-			posCalls.Append(&posCall)
+			posCalls.Append(posCall)
 		}
 	}
 	return posCalls
