@@ -2,6 +2,7 @@ package mahjong
 
 import (
 	"errors"
+	"github.com/hphphp123321/go-common"
 )
 
 // ReConstructGame
@@ -47,7 +48,7 @@ func ReConstructGame(playerSlice []*Player, globalEvents Events) *Game {
 		switch event.GetType() {
 		case EventTypeGet:
 			for wind := range posCalls {
-				if game.Position != wind {
+				if game.Position != wind || common.SliceContain(posCalls[wind], SkipCall) {
 					posCall[wind] = SkipCall
 				}
 			}
@@ -55,7 +56,7 @@ func ReConstructGame(playerSlice []*Player, globalEvents Events) *Game {
 			who := event.(*EventDiscard).Who
 			calls := posCalls[who]
 			for _, call := range calls {
-				if call.CallTiles[0] == event.(*EventDiscard).Tile {
+				if call.CallType == Discard && call.CallTiles[0] == event.(*EventDiscard).Tile {
 					posCall[who] = call
 					break
 				}
@@ -64,7 +65,7 @@ func ReConstructGame(playerSlice []*Player, globalEvents Events) *Game {
 			who := event.(*EventTsumoGiri).Who
 			calls := posCalls[who]
 			for _, call := range calls {
-				if call.CallTiles[0] == event.(*EventTsumoGiri).Tile {
+				if call.CallType == Discard && call.CallTiles[0] == event.(*EventTsumoGiri).Tile {
 					posCall[who] = call
 					break
 				}
@@ -90,16 +91,29 @@ func ReConstructGame(playerSlice []*Player, globalEvents Events) *Game {
 		case EventTypeRiichi:
 			who := event.(*EventRiichi).Who
 			step := event.(*EventRiichi).Step
+			var tile Tile
 			if step == 2 {
+				index++
 				continue
 			}
-			tile := globalEvents[index+1].(*EventDiscard).Tile
+			nextEvent := globalEvents[index+1]
+			switch nextEvent.GetType() {
+			case EventTypeDiscard:
+				tile = nextEvent.(*EventDiscard).Tile
+			case EventTypeTsumoGiri:
+				tile = nextEvent.(*EventTsumoGiri).Tile
+			default:
+				panic(errors.New("next event must be EventTypeDiscard or EventTypeTsumoGiri"))
+			}
 			calls := posCalls[who]
 			for _, call := range calls {
 				if call.CallType == Riichi && call.CallTiles[0] == tile {
 					posCall[who] = call
 					break
 				}
+			}
+			if _, ok := posCall[who]; !ok {
+				panic(errors.New("can't find riichi call"))
 			}
 			index++
 		case EventTypeTsumo:
@@ -170,6 +184,9 @@ func ReConstructGame(playerSlice []*Player, globalEvents Events) *Game {
 			for wind, calls := range posCalls {
 				if wind == who {
 					for _, call := range calls {
+						if call.CallType != Ron {
+							continue
+						}
 						if call.CallTiles[0] == event.(*EventRon).WinTile {
 							posCall[who] = call
 							break
@@ -194,6 +211,9 @@ func ReConstructGame(playerSlice []*Player, globalEvents Events) *Game {
 			for wind, calls := range posCalls {
 				if wind == who {
 					for _, call := range calls {
+						if call.CallType != ChanKan {
+							continue
+						}
 						if call.CallTiles[0] == event.(*EventChanKan).WinTile {
 							posCall[who] = call
 							break

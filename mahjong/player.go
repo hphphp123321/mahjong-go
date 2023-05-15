@@ -160,3 +160,37 @@ func (player *Player) judgeNagashiMangan() bool {
 	}
 	return true
 }
+
+func (player *Player) Copy() *Player {
+	p := Player{}
+	p.Points = player.Points
+	p.Wind = player.Wind
+	p.JunNum = player.JunNum
+	p.KanNum = player.KanNum
+	p.HandTiles = player.HandTiles.Copy()
+	p.DiscardTiles = player.DiscardTiles.Copy()
+	p.TilesTsumoGiri = player.TilesTsumoGiri
+	p.BoardTiles = player.BoardTiles.Copy()
+	p.Melds = player.Melds.Copy()
+	p.TenpaiTiles = player.TenpaiTiles.Copy()
+	p.ShantenNum = player.ShantenNum
+	p.TenpaiSlice = player.TenpaiSlice
+	p.JunFuriten = player.JunFuriten
+	p.DiscardFuriten = player.DiscardFuriten
+	p.RiichiFuriten = player.RiichiFuriten
+	p.IppatsuStatus = player.IppatsuStatus
+	p.RyuukyokuStatus = player.RyuukyokuStatus
+	p.FuritenStatus = player.FuritenStatus
+	p.IsTsumo = player.IsTsumo
+	p.IsRiichi = player.IsRiichi
+	p.IsIppatsu = player.IsIppatsu
+	p.IsRinshan = player.IsRinshan
+	p.IsChankan = player.IsChankan
+	p.IsHaitei = player.IsHaitei
+	p.IsHoutei = player.IsHoutei
+	p.IsDaburuRiichi = player.IsDaburuRiichi
+	p.IsTenhou = player.IsTenhou
+	p.IsChiihou = player.IsChiihou
+	p.RiichiStep = player.RiichiStep
+	return &p
+}

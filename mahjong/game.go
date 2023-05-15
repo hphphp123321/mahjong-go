@@ -1256,35 +1256,79 @@ func (game *Game) GetGlobalEvents() Events {
 		Rule:      game.Rule,
 	})
 	// add all players event
-	all := 0
-	index := 0
-	winds := common.SortMapByKey(game.PosPlayer)
-	for all < 4 {
-		for _, wind := range winds {
-			es := game.posEvents[wind]
-			if len(es) <= index {
-				all++
-				continue
-			}
-			e := es[index]
-			switch e.GetType() {
-			case EventTypeStart:
-				index++
-			case EventTypeGet:
-				if e.(*EventGet).Tile == TileDummy {
-					continue
-				} else {
-					events = append(events, e)
-					index++
+	windIndex := map[Wind]int{
+		East:  0,
+		South: 0,
+		West:  0,
+		North: 0,
+	}
+	winds := []Wind{East, South, West, North}
+	esEast := game.posEvents[East]
+	esSouth := game.posEvents[South]
+	esWest := game.posEvents[West]
+	esNorth := game.posEvents[North]
+
+	for windIndex[East] < len(esEast) &&
+		windIndex[South] < len(esSouth) &&
+		windIndex[West] < len(esWest) &&
+		windIndex[North] < len(esNorth) {
+
+		eastIndex := windIndex[East]
+		southIndex := windIndex[South]
+		westIndex := windIndex[West]
+		northIndex := windIndex[North]
+
+		eastEvent := esEast[eastIndex]
+		southEvent := esSouth[southIndex]
+		westEvent := esWest[westIndex]
+		northEvent := esNorth[northIndex]
+
+		var uniqueWind = WindDummy
+
+		if eastEvent.GetType() == southEvent.GetType() {
+			if eastEvent.GetType() == westEvent.GetType() {
+				if eastEvent.GetType() != northEvent.GetType() {
+					uniqueWind = North
 				}
-			case EventTypeFuriten:
-				index++
-			default:
-				events = append(events, e)
-				index++
+			} else {
+				uniqueWind = West
+			}
+		} else {
+			if eastEvent.GetType() == westEvent.GetType() {
+				uniqueWind = South
+			} else {
+				uniqueWind = East
 			}
 		}
+
+		if esEast[eastIndex].GetType() == EventTypeStart {
+			windIndex[East]++
+			windIndex[South]++
+			windIndex[West]++
+			windIndex[North]++
+			continue
+		}
+
+		if uniqueWind != WindDummy {
+			windIndex[uniqueWind]++
+		} else {
+			if eastEvent.GetType() == EventTypeGet {
+				for _, e := range []Event{eastEvent, southEvent, westEvent, northEvent} {
+					if e.(*EventGet).Tile != TileDummy {
+						events = append(events, e)
+						break
+					}
+				}
+			} else {
+				events = append(events, eastEvent)
+			}
+			windIndex[East]++
+			windIndex[South]++
+			windIndex[West]++
+			windIndex[North]++
+		}
 	}
+
 	var initPoints = make(map[Wind]int)
 	if events[len(events)-1].GetType() == EventTypeEnd {
 		for _, wind := range winds {

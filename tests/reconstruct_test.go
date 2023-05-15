@@ -8,7 +8,7 @@ import (
 )
 
 func TestReConstruct(t *testing.T) {
-	var seed int64 = 17
+	var seed int64 = rand.Int63()
 	players := make([]*mahjong.Player, 4)
 	posCalls := make(map[mahjong.Wind]mahjong.Calls, 4)
 	posCall := make(map[mahjong.Wind]*mahjong.Call, 4)
@@ -18,7 +18,7 @@ func TestReConstruct(t *testing.T) {
 	game := mahjong.NewMahjongGame(seed, nil)
 	r := rand.New(rand.NewSource(seed))
 
-	for i := 0; i < 100; i++ {
+	for i := 0; i < 10; i++ {
 		posCalls = game.Reset(players, nil)
 		flag := mahjong.EndTypeNone
 
@@ -38,9 +38,13 @@ func TestReConstruct(t *testing.T) {
 					pSlice[i] = mahjong.NewMahjongPlayer()
 				}
 
+				//mahjong.ReConstructGame(pSlice, events)
+
 				cGame := mahjong.ReConstructGame(pSlice, events)
-				//fmt.Println("re:   " + cGame.State.String() + " player: " + cGame.Position.String())
-				fmt.Println("game: " + cGame.State.String())
+				if cGame.GetNumRemainTiles() != game.GetNumRemainTiles() {
+					panic("num remain tiles not equal")
+				}
+				fmt.Println("game state:   " + cGame.State.String() + " player: " + cGame.Position.String())
 			}
 			if len(posCalls) == 4 {
 				fmt.Println("next round")

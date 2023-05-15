@@ -10,7 +10,7 @@ type Result struct {
 	YakuResult      *YakuResult  `json:"yakuResult,omitempty"`
 	ScoreResult     *ScoreResult `json:"scoreResult,omitempty"`
 	RonCall         *Call
-	RyuuKyokuReason RyuuKyokuReason `json:"ryuuKyokuReason,omitempty"`
+	RyuuKyokuReason RyuuKyokuReason
 }
 
 func GenerateRonResult(yakuResult *yaku.Result, scoreResult *score.Score) (r *Result) {
