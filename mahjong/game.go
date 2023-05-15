@@ -163,6 +163,9 @@ func (game *Game) GetPosBoardState(pos Wind, validActions Calls) (r *BoardState)
 
 func (game *Game) addPosEvent(posEvent map[Wind]Event) {
 	for pos, event := range posEvent {
+		if event == nil {
+			panic("event is nil")
+		}
 		game.posEvents[pos] = append(game.posEvents[pos], event)
 	}
 }
@@ -227,10 +230,10 @@ func (game *Game) discardTileProcess(pMain *Player, tileID Tile) {
 	game.Tiles.allTiles[tileID].discardWind = pMain.Wind
 	pMain.ShantenNum = pMain.GetShantenNum()
 	if pMain.ShantenNum == 0 {
-		pMain.TenhaiSlice = pMain.GetTenhaiSlice()
+		pMain.TenpaiSlice = pMain.GetTenpaiSlice()
 		flag := false
 		for _, tile := range pMain.DiscardTiles {
-			if common.SliceContain(pMain.TenhaiSlice, tile.Class()) {
+			if common.SliceContain(pMain.TenpaiSlice, tile.Class()) {
 				flag = true
 			}
 		}
@@ -242,7 +245,7 @@ func (game *Game) discardTileProcess(pMain *Player, tileID Tile) {
 	}
 	otherWinds := game.getOtherWinds()
 	for _, wind := range otherWinds {
-		if common.SliceContain(game.PosPlayer[wind].TenhaiSlice, tileID.Class()) {
+		if common.SliceContain(game.PosPlayer[wind].TenpaiSlice, tileID.Class()) {
 			game.PosPlayer[wind].FuritenStatus = true
 		} else {
 			game.PosPlayer[wind].FuritenStatus = false
@@ -480,7 +483,7 @@ func (game *Game) processKyuuShuKyuuHai() *Result {
 }
 
 func (game *Game) judgeRon(pMain *Player, tileID Tile) Calls {
-	if pMain.IsFuriten() || !common.SliceContain(pMain.TenhaiSlice, tileID.Class()) {
+	if pMain.IsFuriten() || !common.SliceContain(pMain.TenpaiSlice, tileID.Class()) {
 		return make(Calls, 0)
 	}
 	if game.Tiles.allTiles[tileID].isLast {
@@ -499,7 +502,7 @@ func (game *Game) judgeRon(pMain *Player, tileID Tile) Calls {
 }
 
 func (game *Game) judgeChanKan(pMain *Player, tileID Tile, isAnKan bool) Calls {
-	if pMain.IsFuriten() || !common.SliceContain(pMain.TenhaiSlice, tileID.Class()) {
+	if pMain.IsFuriten() || !common.SliceContain(pMain.TenpaiSlice, tileID.Class()) {
 		return make(Calls, 0)
 	}
 	pMain.IsChankan = true
@@ -567,7 +570,7 @@ func (game *Game) judgeRiichi(pMain *Player) Calls {
 			}
 		}
 	}
-	tiles := pMain.GetRiichiTiles()
+	tiles := pMain.GetPossibleTenpaiTiles()
 	riichiCalls := make(Calls, 0, len(tiles))
 	for _, tileID := range tiles {
 		riichiCalls = append(riichiCalls, &Call{
@@ -761,7 +764,7 @@ func (game *Game) judgeDaiMinKan(pMain *Player, tileID Tile) Calls {
 	if tileCount < 2 {
 		return make(Calls, 0)
 	}
-	posKanTiles := Tiles{Tile(kanClass * 4), Tile(kanClass*4 + 1), Tile(kanClass*4 + 2), Tile(kanClass*4 + 3)}
+	posKanTiles := kanClass.To4Tiles()
 	posKanTiles.Remove(tileID)
 	tile0 := posKanTiles[0]
 	tile1 := posKanTiles[1]
@@ -812,13 +815,13 @@ func (game *Game) judgeAnKan(pMain *Player) Calls {
 				if d != len(pMain.HandTiles)-1 {
 					continue
 				}
-				// if a riichi player's tenhai changed after ankan, then this ankan is not valid
-				tenhaiSlice := pMain.TenhaiSlice
+				// if a riichi player's Tenpai changed after ankan, then this ankan is not valid
+				TenpaiSlice := pMain.TenpaiSlice
 				tmpHandTiles := common.RemoveIndex(pMain.HandTiles, a, b, c, d)
 				melds := pMain.Melds.Copy()
 				melds.Append(posCall)
-				tenhaiSliceAfterKan := GetTenhaiSlice(tmpHandTiles, melds)
-				if !common.SliceEqual(tenhaiSlice, tenhaiSliceAfterKan) {
+				TenpaiSliceAfterKan := GetTenpaiSlice(tmpHandTiles, melds)
+				if !common.SliceEqual(TenpaiSlice, TenpaiSliceAfterKan) {
 					continue
 				}
 			}
@@ -1100,13 +1103,13 @@ func (game *Game) processNagashiMangan(winds []Wind) {
 	}
 }
 
-// judgeTenHaiWinds returns the winds of players who have ten hai in the ryuukyoku situation.
-func (game *Game) judgeTenHaiWinds() []Wind {
+// judgeTenpaiWinds returns the winds of players who have ten hai in the ryuukyoku situation.
+func (game *Game) judgeTenpaiWinds() []Wind {
 	var retSlice = make([]Wind, 0, 4)
 	winds := common.SortMapByKey(game.PosPlayer)
 	for _, wind := range winds {
 		player := game.PosPlayer[wind]
-		if len(player.TenhaiSlice) > 0 {
+		if len(player.TenpaiSlice) > 0 {
 			retSlice = append(retSlice, wind)
 		}
 	}
@@ -1116,7 +1119,7 @@ func (game *Game) judgeTenHaiWinds() []Wind {
 
 func (game *Game) processNormalRyuuKyoku(winds []Wind) {
 	if len(winds) == 0 {
-		// no player tenhai
+		// no player Tenpai
 		return
 	}
 	otherWinds := []Wind{0, 1, 2, 3}
@@ -1128,14 +1131,14 @@ func (game *Game) processNormalRyuuKyoku(winds []Wind) {
 		}
 	}
 	if len(winds) == 1 {
-		// one player tenhai
+		// one player Tenpai
 		wind := winds[0]
 		game.PosPlayer[wind].Points += 3000
 		for _, w := range otherWinds {
 			game.PosPlayer[w].Points -= 1000
 		}
 	} else if len(winds) == 2 {
-		// two players tenhai
+		// two players Tenpai
 		wind0 := winds[0]
 		wind1 := winds[1]
 		game.PosPlayer[wind0].Points += 1500
@@ -1144,7 +1147,7 @@ func (game *Game) processNormalRyuuKyoku(winds []Wind) {
 			game.PosPlayer[w].Points -= 1500
 		}
 	} else {
-		// three players tenhai
+		// three players Tenpai
 		wind0 := winds[0]
 		wind1 := winds[1]
 		wind2 := winds[2]

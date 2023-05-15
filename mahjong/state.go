@@ -96,12 +96,15 @@ func (s *DealState) step() map[Wind]Calls {
 	var posEvent = make(map[Wind]Event)
 	for wind := range s.g.PosPlayer {
 		var t = TileDummy
+		var tenpaiInfos *TenpaiInfos
 		if wind == pMain.Wind {
 			t = tile
+			tenpaiInfos = GetPlayerTenpaiInfos(s.g, pMain)
 		}
 		posEvent[wind] = &EventGet{
-			Who:  pMain.Wind,
-			Tile: t,
+			Who:         pMain.Wind,
+			Tile:        t,
+			TenpaiInfos: tenpaiInfos,
 		}
 	}
 	s.g.addPosEvent(posEvent)
@@ -138,12 +141,14 @@ func (s *DealState) next(posCalls map[Wind]*Call) error {
 	pMain := s.g.PosPlayer[s.g.Position]
 	switch call.CallType {
 	case Discard:
+		furitenBef := pMain.IsFuriten()
 		s.g.discardTileProcess(pMain, call.CallTiles[0])
 		tsumoGiri := pMain.TilesTsumoGiri[len(pMain.TilesTsumoGiri)-1]
 		s.g.State = &DiscardState{
-			g:         s.g,
-			tileID:    call.CallTiles[0],
-			tsumoGiri: tsumoGiri,
+			g:                s.g,
+			tileID:           call.CallTiles[0],
+			tsumoGiri:        tsumoGiri,
+			isFuritenChanged: furitenBef != pMain.IsFuriten(),
 		}
 	case ShouMinKan:
 		s.g.processShouMinKan(pMain, call)
@@ -162,6 +167,7 @@ func (s *DealState) next(posCalls map[Wind]*Call) error {
 			call: call,
 		}
 	case Riichi:
+		furitenBef := pMain.IsFuriten()
 		s.g.processRiichiStep1(pMain, call)
 		s.g.breakIppatsu()
 		// generate riichi event
@@ -176,9 +182,10 @@ func (s *DealState) next(posCalls map[Wind]*Call) error {
 		s.g.breakIppatsu()
 		tsumoGiri := pMain.TilesTsumoGiri[len(pMain.TilesTsumoGiri)-1]
 		s.g.State = &DiscardState{
-			g:         s.g,
-			tileID:    call.CallTiles[0],
-			tsumoGiri: tsumoGiri,
+			g:                s.g,
+			tileID:           call.CallTiles[0],
+			tsumoGiri:        tsumoGiri,
+			isFuritenChanged: furitenBef != pMain.IsFuriten(),
 		}
 	case Tsumo:
 		result := s.g.processTsumo(pMain, call)
@@ -203,13 +210,17 @@ func (s *DealState) String() string {
 }
 
 type DiscardState struct {
-	g         *Game
-	tileID    Tile
-	tsumoGiri bool
+	g                *Game
+	tileID           Tile
+	tsumoGiri        bool
+	isFuritenChanged bool
 }
 
 // step after one player discard a tile
 func (s *DiscardState) step() map[Wind]Calls {
+	pMain := s.g.PosPlayer[s.g.Position]
+
+	// judge other calls
 	var validCalls = make(map[Wind]Calls)
 	for wind, player := range s.g.PosPlayer {
 		if wind == s.g.Position {
@@ -219,24 +230,24 @@ func (s *DiscardState) step() map[Wind]Calls {
 			validCalls[wind] = calls
 		}
 	}
-	// generate discard event
-	var posEvent = make(map[Wind]Event)
-	var event Event
-	var tenhaiSlice = s.g.PosPlayer[s.g.Position].TenhaiSlice
 
+	// generate discard event
+	var event Event
+	var posEvent = make(map[Wind]Event)
+	var TenpaiSlice = pMain.TenpaiSlice
 	for wind := range s.g.PosPlayer {
 		if wind == s.g.Position {
 			if s.tsumoGiri {
 				event = &EventTsumoGiri{
 					Who:         s.g.Position,
 					Tile:        s.tileID,
-					TenhaiSlice: tenhaiSlice,
+					TenpaiSlice: TenpaiSlice,
 				}
 			} else {
 				event = &EventDiscard{
 					Who:         s.g.Position,
 					Tile:        s.tileID,
-					TenhaiSlice: tenhaiSlice,
+					TenpaiSlice: TenpaiSlice,
 				}
 			}
 		} else {
@@ -256,11 +267,28 @@ func (s *DiscardState) step() map[Wind]Calls {
 	}
 	s.g.addPosEvent(posEvent)
 
+	// self player furiten check
+	posEvent = make(map[Wind]Event)
+	if s.isFuritenChanged {
+		if pMain.IsFuriten() {
+			event = &EventFuriten{
+				Who:           pMain.Wind,
+				FuritenReason: FuritenDiscard,
+			}
+		} else {
+			event = &EventFuriten{
+				Who:           pMain.Wind,
+				FuritenReason: FuritenNone,
+			}
+		}
+		posEvent[s.g.Position] = event
+		s.g.addPosEvent(posEvent)
+	}
 	return validCalls
 }
 
 func (s *DiscardState) next(posCalls map[Wind]*Call) error {
-	// furiten check
+	// other players furiten check
 	for _, wind := range s.g.getOtherWinds() {
 		player := s.g.PosPlayer[wind]
 		if !player.FuritenStatus {
@@ -591,7 +619,7 @@ func (s *EndState) step() map[Wind]Calls {
 	case 4:
 		// ryuu kyoku
 		if s.posResults[East].RyuuKyokuReason == RyuuKyokuNormal {
-			tenhaiWinds := s.g.judgeTenHaiWinds()
+			TenpaiWinds := s.g.judgeTenpaiWinds()
 			if s.g.Rule.IsNagashiMangan {
 				// judge ryuu kyoku mangan
 				bSlice := s.g.judgeNagashiMangan()
@@ -609,26 +637,26 @@ func (s *EndState) step() map[Wind]Calls {
 					}
 
 				} else {
-					s.g.processNormalRyuuKyoku(tenhaiWinds)
+					s.g.processNormalRyuuKyoku(TenpaiWinds)
 				}
 			} else {
 				// process normal ryuu kyoku
-				s.g.processNormalRyuuKyoku(tenhaiWinds)
+				s.g.processNormalRyuuKyoku(TenpaiWinds)
 			}
 			for w := range s.g.PosPlayer {
-				for _, wind := range tenhaiWinds {
+				for _, wind := range TenpaiWinds {
 					player := s.g.PosPlayer[wind]
-					posEvent[w] = &EventTenhaiEnd{
+					posEvent[w] = &EventTenpaiEnd{
 						Who:         wind,
 						HandTiles:   player.HandTiles,
-						TenhaiSlice: player.TenhaiSlice,
+						TenpaiSlice: player.TenpaiSlice,
 					}
 				}
 				s.g.addPosEvent(posEvent)
 				posEvent = make(map[Wind]Event)
 			}
 
-			if !common.SliceContain(tenhaiWinds, East) {
+			if !common.SliceContain(TenpaiWinds, East) {
 				// east not ten hai
 				s.g.nextRound = true
 			}

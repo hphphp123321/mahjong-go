@@ -15,9 +15,9 @@ type Player struct {
 	TilesTsumoGiri  []bool
 	BoardTiles      Tiles
 	Melds           Calls
-	TenhaiTiles     Tiles
+	TenpaiTiles     Tiles
 	ShantenNum      int
-	TenhaiSlice     TileClasses
+	TenpaiSlice     TileClasses
 	JunFuriten      bool
 	DiscardFuriten  bool
 	RiichiFuriten   bool
@@ -57,13 +57,23 @@ func (player *Player) GetShantenNum() int {
 	return CalculateShantenNum(player.HandTiles, player.Melds)
 }
 
-func (player *Player) GetTenhaiSlice() []TileClass {
-	return GetTenhaiSlice(player.HandTiles.Copy(), player.Melds.Copy())
+// GetTenpaiSlice
+//
+//	@Description: Get player's tenpai slice after discard a tile
+//	@receiver player
+//	@return []TileClass
+func (player *Player) GetTenpaiSlice() []TileClass {
+	return GetTenpaiSlice(player.HandTiles.Copy(), player.Melds.Copy())
 }
 
-func (player *Player) GetRiichiTiles() Tiles {
+// GetPossibleTenpaiTiles
+//
+//	@Description: Get player's possible tenpai tiles after get a tile
+//	@receiver player
+//	@return Tiles
+func (player *Player) GetPossibleTenpaiTiles() Tiles {
 	if player.ShantenNum > 1 && player.JunNum > 1 {
-		panic("player's shanten num should not be greater than 1 before Riichi!")
+		return Tiles{}
 	}
 	rTiles := make(Tiles, 0, len(player.HandTiles))
 	handTilesCopy := make(Tiles, len(player.HandTiles)-1, len(player.HandTiles))
@@ -112,9 +122,9 @@ func (player *Player) ResetForRound() {
 	player.TilesTsumoGiri = make([]bool, 0, 25)
 	player.BoardTiles = make(Tiles, 0, 25)
 	player.Melds = make(Calls, 0, 4)
-	player.TenhaiTiles = make(Tiles, 0, 13)
+	player.TenpaiTiles = make(Tiles, 0, 13)
 	player.ShantenNum = 7
-	player.TenhaiSlice = []TileClass{}
+	player.TenpaiSlice = []TileClass{}
 	player.JunFuriten = false
 	player.DiscardFuriten = false
 	player.RiichiFuriten = false

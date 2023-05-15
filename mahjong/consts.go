@@ -102,7 +102,7 @@ const (
 	EventTypeEnd
 	EventTypeFuriten
 	EventTypeNagashiMangan
-	EventTypeTenhaiEnd
+	EventTypeTenpaiEnd
 	EventTypeGlobalInit
 )
 
@@ -347,6 +347,10 @@ const (
 	RedPin5
 	RedSou5
 )
+
+func (ts TileClass) To4Tiles() Tiles {
+	return Tiles{Tile(ts * 4), Tile(ts*4 + 1), Tile(ts*4 + 2), Tile(ts*4 + 3)}
+}
 
 var MapStringToTileClass = func() map[string]TileClass {
 	m := make(map[string]TileClass)

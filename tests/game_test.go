@@ -58,6 +58,8 @@ func TestMultiGames(t *testing.T) {
 			posCalls, flag = game.Step(posCall)
 			posCall = make(map[mahjong.Wind]*mahjong.Call, 4)
 			events := game.GetPosEvents(players[0].Wind, eventIndex)
+			b, _ := json.Marshal(&events)
+			fmt.Println(string(b))
 			eventIndex += len(events)
 			if len(posCalls) == 4 {
 				for _, player := range players {

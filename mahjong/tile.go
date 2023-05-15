@@ -327,3 +327,81 @@ func (tileClasses *TileClasses) UnmarshalJSON(data []byte) error {
 	}
 	return nil
 }
+
+type TenpaiInfos map[Tile]*TenpaiInfo
+
+func NewTenpaiInfos() *TenpaiInfos {
+	return &TenpaiInfos{}
+}
+
+func (tenpaiInfos *TenpaiInfos) MarshalJSON() ([]byte, error) {
+	return json.Marshal(&struct {
+		TenpaiInfos map[string]*TenpaiInfo `json:"tenpai_infos"`
+	}{
+		TenpaiInfos: func() map[string]*TenpaiInfo {
+			tenpaiInfosMap := make(map[string]*TenpaiInfo)
+			for tile, tenpaiInfo := range *tenpaiInfos {
+				tenpaiInfosMap[tile.String()] = tenpaiInfo
+			}
+			return tenpaiInfosMap
+		}(),
+	})
+}
+
+func (tenpaiInfos *TenpaiInfos) UnmarshalJSON(data []byte) error {
+	var str map[string]*TenpaiInfo
+	err := json.Unmarshal(data, &str)
+	if err != nil {
+		return err
+	}
+	*tenpaiInfos = make(TenpaiInfos)
+	for tile, tenpaiInfo := range str {
+		(*tenpaiInfos)[MapStringToTile[tile]] = tenpaiInfo
+	}
+	return nil
+}
+
+type TenpaiInfo struct {
+	TileClassesRemainNum map[TileClass]int `json:"tile_classes_remain_num"`
+	Furiten              bool              `json:"furiten"`
+}
+
+func NewTenpaiInfo() *TenpaiInfo {
+	return &TenpaiInfo{
+		TileClassesRemainNum: make(map[TileClass]int),
+		Furiten:              false,
+	}
+}
+
+func (tenpaiInfo *TenpaiInfo) MarshalJSON() ([]byte, error) {
+	return json.Marshal(&struct {
+		TileClassesRemainNum map[string]int `json:"tile_classes_remain_num"`
+		Furiten              bool           `json:"furiten"`
+	}{
+		TileClassesRemainNum: func() map[string]int {
+			tileClassesRemainNum := make(map[string]int)
+			for tileClass, num := range tenpaiInfo.TileClassesRemainNum {
+				tileClassesRemainNum[tileClass.String()] = num
+			}
+			return tileClassesRemainNum
+		}(),
+		Furiten: tenpaiInfo.Furiten,
+	})
+}
+
+func (tenpaiInfo *TenpaiInfo) UnmarshalJSON(data []byte) error {
+	var tmp struct {
+		TileClassesRemainNum map[string]int `json:"tile_classes_remain_num"`
+		Furiten              bool           `json:"furiten"`
+	}
+	err := json.Unmarshal(data, &tmp)
+	if err != nil {
+		return err
+	}
+	tenpaiInfo.TileClassesRemainNum = make(map[TileClass]int)
+	for tileClass, num := range tmp.TileClassesRemainNum {
+		tenpaiInfo.TileClassesRemainNum[MapStringToTileClass[tileClass]] = num
+	}
+	tenpaiInfo.Furiten = tmp.Furiten
+	return nil
+}

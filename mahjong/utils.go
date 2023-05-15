@@ -13,16 +13,16 @@ func CalculateShantenNum(handTiles Tiles, melds Calls) int {
 	return res.Total.Value
 }
 
-func GetTenhaiSlice(handTiles Tiles, melds Calls) TileClasses {
-	var tenhaiSlice TileClasses
+func GetTenpaiSlice(handTiles Tiles, melds Calls) TileClasses {
+	var TenpaiSlice TileClasses
 
 	instances, meldsOpt := TilesCallsToCalc(handTiles, melds)
 	res := tempai.Calculate(instances, meldsOpt)
 	tiles := tempai.GetWaits(res).Tiles()
 	for _, t := range tiles {
-		tenhaiSlice = append(tenhaiSlice, TileClass(int(t)-1))
+		TenpaiSlice = append(TenpaiSlice, TileClass(int(t)-1))
 	}
-	return tenhaiSlice
+	return TenpaiSlice
 }
 
 func IndicatorsToDora(indicators Tiles) Tiles {
@@ -58,6 +58,64 @@ func GetYakuResult(handTiles Tiles, melds Calls, ctx *yaku.Context) *yaku.Result
 
 func GetScoreResult(scoreRule *score.RulesStruct, yakuResult *yaku.Result, honba int) score.Score {
 	return score.GetScoreByResult(scoreRule, yakuResult, score.Honba(honba))
+}
+
+// GetPlayerTenpaiInfos
+//
+//	@Description: after one player get a tile, get the tenpai infos(such as how many tiles remaining to ron)
+//	@param game
+//	@param player
+//	@return *TenpaiInfos
+func GetPlayerTenpaiInfos(game *Game, player *Player) *TenpaiInfos {
+	tenpaiTiles := player.GetPossibleTenpaiTiles()
+	if len(tenpaiTiles) == 0 {
+		return nil
+	}
+	var tenpaiInfos = NewTenpaiInfos()
+	for _, tileToDiscard := range tenpaiTiles {
+		var tenpaiInfo = NewTenpaiInfo()
+		handTilesCopy := player.HandTiles.Copy()
+		handTilesCopy.Remove(tileToDiscard)
+		tenpaiSlice := GetTenpaiSlice(handTilesCopy, player.Melds.Copy())
+		for _, tenpaiTileClass := range tenpaiSlice {
+			tenpaiInfo.TileClassesRemainNum[tenpaiTileClass] = GetRemainTileClassNumFromPlayerPerspective(game, player, tenpaiTileClass)
+			for _, tile := range player.DiscardTiles {
+				if tile.Class() == tenpaiTileClass {
+					tenpaiInfo.Furiten = true
+				}
+			}
+			if player.IsFuriten() {
+				tenpaiInfo.Furiten = true
+			}
+		}
+		(*tenpaiInfos)[tileToDiscard] = tenpaiInfo
+	}
+	return tenpaiInfos
+}
+
+func GetRemainTileClassNumFromPlayerPerspective(game *Game, player *Player, tileClass TileClass) int {
+	num := 4
+	for _, tile := range player.HandTiles {
+		if tile.Class() == tileClass {
+			num--
+		}
+	}
+	for _, p := range game.PosPlayer {
+		for _, tile := range p.DiscardTiles {
+			if tile.Class() == tileClass {
+				num--
+			}
+		}
+	}
+	for _, tile := range game.Tiles.DoraIndicators() {
+		if tile.Class() == tileClass {
+			num--
+		}
+	}
+	if num < 0 {
+		panic("RemainTileClassNum < 0")
+	}
+	return num
 }
 
 func divideIntoLines(s string, lines int) []string {
