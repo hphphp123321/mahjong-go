@@ -96,7 +96,7 @@ func (s *DealState) step() map[Wind]Calls {
 	var posEvent = make(map[Wind]Event)
 	for wind := range s.g.PosPlayer {
 		var t = TileDummy
-		var tenpaiInfos *TenpaiInfos
+		var tenpaiInfos TenpaiInfos
 		if wind == pMain.Wind {
 			t = tile
 			tenpaiInfos = GetTenpaiInfos(s.g, pMain)

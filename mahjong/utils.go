@@ -66,16 +66,16 @@ func GetScoreResult(scoreRule *score.RulesStruct, yakuResult *yaku.Result, honba
 //	@param game
 //	@param player
 //	@return *TenpaiInfos
-func GetTenpaiInfos(game *Game, player *Player) *TenpaiInfos {
+func GetTenpaiInfos(game *Game, player *Player) TenpaiInfos {
 	tenpaiTiles := player.GetPossibleTenpaiTiles()
 	if len(tenpaiTiles) == 0 {
 		return nil
 	}
-	var tenpaiInfos = NewTenpaiInfos()
+	var tenpaiInfos = make(TenpaiInfos)
 	for _, tileToDiscard := range tenpaiTiles {
 		var playerCopy = player.Copy()
 		playerCopy.HandTiles.Remove(tileToDiscard)
-		(*tenpaiInfos)[tileToDiscard] = GetTenpaiInfo(game, playerCopy)
+		tenpaiInfos[tileToDiscard] = GetTenpaiInfo(game, playerCopy)
 	}
 	return tenpaiInfos
 }

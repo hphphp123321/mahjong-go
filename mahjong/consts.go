@@ -23,7 +23,7 @@ var MapStringToWind = func() map[string]Wind {
 
 type WindRound int
 
-//go:generate stringer -type=WindRound
+//go:generate stringer -type=WindRound -trimprefix WindRound
 const (
 	WindRoundDummy WindRound = iota
 	WindRoundEast1
@@ -82,7 +82,7 @@ var MapStringToCallType = func() map[string]CallType {
 
 type EventType int
 
-//go:generate stringer -type=EventType
+//go:generate stringer -type=EventType -trimprefix EventType
 const (
 	EventTypeGet EventType = -1 + iota
 	EventTypeTsumoGiri

@@ -330,10 +330,6 @@ func (tileClasses *TileClasses) UnmarshalJSON(data []byte) error {
 
 type TenpaiInfos map[Tile]*TenpaiInfo
 
-func NewTenpaiInfos() *TenpaiInfos {
-	return &TenpaiInfos{}
-}
-
 func (tenpaiInfos *TenpaiInfos) MarshalJSON() ([]byte, error) {
 	return json.Marshal(&struct {
 		TenpaiInfos map[string]*TenpaiInfo `json:"tenpai_infos"`
