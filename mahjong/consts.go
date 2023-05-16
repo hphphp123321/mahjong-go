@@ -118,7 +118,7 @@ type RyuuKyokuReason int
 
 //go:generate stringer -type=RyuuKyokuReason
 const (
-	NoRyuuKyoku RyuuKyokuReason = iota - 1
+	NoRyuuKyoku RyuuKyokuReason = iota
 	RyuuKyokuNormal
 	RyuuKyokuKyuuShuKyuuHai
 	RyuuKyokuSuuChaRiichi
@@ -139,7 +139,7 @@ type FuritenReason int
 
 //go:generate stringer -type=FuritenReason
 const (
-	FuritenNone FuritenReason = iota - 1
+	FuritenNone FuritenReason = iota
 	FuritenJun
 	FuritenDiscard
 	FuritenRiichi

@@ -44,7 +44,7 @@ func TestReConstruct(t *testing.T) {
 				if cGame.GetNumRemainTiles() != game.GetNumRemainTiles() {
 					panic("num remain tiles not equal")
 				}
-				fmt.Println("game state:   " + cGame.State.String() + " player: " + cGame.Position.String())
+				fmt.Println("game state:   " + cGame.State.String() + "; player: " + cGame.Position.String())
 			}
 			if len(posCalls) == 4 {
 				fmt.Println("next round")
