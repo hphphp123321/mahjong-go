@@ -99,13 +99,13 @@ func (event *EventGet) GetType() EventType {
 
 func (event *EventGet) MarshalJSON() ([]byte, error) {
 	return json.Marshal(&struct {
-		Who        string       `json:"who"`
-		Tile       string       `json:"tile,omitempty"`
-		TenpaiInfo *TenpaiInfos `json:"tenpai_infos,omitempty"`
+		Who         string       `json:"who"`
+		Tile        string       `json:"tile,omitempty"`
+		TenpaiInfos *TenpaiInfos `json:"tenpai_infos,omitempty"`
 	}{
-		Who:        event.Who.String(),
-		Tile:       event.Tile.String(),
-		TenpaiInfo: event.TenpaiInfos,
+		Who:         event.Who.String(),
+		Tile:        event.Tile.String(),
+		TenpaiInfos: event.TenpaiInfos,
 	})
 }
 
@@ -126,9 +126,9 @@ func (event *EventGet) UnmarshalJSON(data []byte) error {
 }
 
 type EventTsumoGiri struct {
-	Who         Wind        `json:"who"`
-	Tile        Tile        `json:"tile"`
-	TenpaiSlice TileClasses `json:"tenpai_slice,omitempty"`
+	Who        Wind        `json:"who"`
+	Tile       Tile        `json:"tile"`
+	TenpaiInfo *TenpaiInfo `json:"tenpai_info,omitempty"`
 }
 
 func (event *EventTsumoGiri) GetType() EventType {
@@ -137,21 +137,21 @@ func (event *EventTsumoGiri) GetType() EventType {
 
 func (event *EventTsumoGiri) MarshalJSON() ([]byte, error) {
 	return json.Marshal(&struct {
-		Who         string      `json:"who"`
-		Tile        string      `json:"tile"`
-		TenpaiSlice TileClasses `json:"tenpai_slice,omitempty"`
+		Who        string      `json:"who"`
+		Tile       string      `json:"tile"`
+		TenpaiInfo *TenpaiInfo `json:"tenpai_info,omitempty"`
 	}{
-		Who:         event.Who.String(),
-		Tile:        event.Tile.String(),
-		TenpaiSlice: event.TenpaiSlice,
+		Who:        event.Who.String(),
+		Tile:       event.Tile.String(),
+		TenpaiInfo: event.TenpaiInfo,
 	})
 }
 
 func (event *EventTsumoGiri) UnmarshalJSON(data []byte) error {
 	var tmp struct {
-		Who         string      `json:"who"`
-		Tile        string      `json:"tile"`
-		TenpaiSlice TileClasses `json:"tenpai_slice,omitempty"`
+		Who        string      `json:"who"`
+		Tile       string      `json:"tile"`
+		TenpaiInfo *TenpaiInfo `json:"tenpai_info,omitempty"`
 	}
 	err := json.Unmarshal(data, &tmp)
 	if err != nil {
@@ -159,14 +159,14 @@ func (event *EventTsumoGiri) UnmarshalJSON(data []byte) error {
 	}
 	event.Who = MapStringToWind[tmp.Who]
 	event.Tile = MapStringToTile[tmp.Tile]
-	event.TenpaiSlice = tmp.TenpaiSlice
+	event.TenpaiInfo = tmp.TenpaiInfo
 	return nil
 }
 
 type EventDiscard struct {
-	Who         Wind        `json:"who"`
-	Tile        Tile        `json:"tile"`
-	TenpaiSlice TileClasses `json:"tenpai_slice,omitempty"`
+	Who        Wind        `json:"who"`
+	Tile       Tile        `json:"tile"`
+	TenpaiInfo *TenpaiInfo `json:"tenpai_info,omitempty"`
 }
 
 func (event *EventDiscard) GetType() EventType {
@@ -175,21 +175,21 @@ func (event *EventDiscard) GetType() EventType {
 
 func (event *EventDiscard) MarshalJSON() ([]byte, error) {
 	return json.Marshal(&struct {
-		Who         string      `json:"who"`
-		Tile        string      `json:"tile"`
-		TenpaiSlice TileClasses `json:"tenpai_slice,omitempty"`
+		Who        string      `json:"who"`
+		Tile       string      `json:"tile"`
+		TenpaiInfo *TenpaiInfo `json:"tenpai_info,omitempty"`
 	}{
-		Who:         event.Who.String(),
-		Tile:        event.Tile.String(),
-		TenpaiSlice: event.TenpaiSlice,
+		Who:        event.Who.String(),
+		Tile:       event.Tile.String(),
+		TenpaiInfo: event.TenpaiInfo,
 	})
 }
 
 func (event *EventDiscard) UnmarshalJSON(data []byte) error {
 	var tmp struct {
-		Who         string      `json:"who"`
-		Tile        string      `json:"tile"`
-		TenpaiSlice TileClasses `json:"tenpai_slice,omitempty"`
+		Who        string      `json:"who"`
+		Tile       string      `json:"tile"`
+		TenpaiInfo *TenpaiInfo `json:"tenpai_info,omitempty"`
 	}
 	err := json.Unmarshal(data, &tmp)
 	if err != nil {
@@ -197,13 +197,14 @@ func (event *EventDiscard) UnmarshalJSON(data []byte) error {
 	}
 	event.Who = MapStringToWind[tmp.Who]
 	event.Tile = MapStringToTile[tmp.Tile]
-	event.TenpaiSlice = tmp.TenpaiSlice
+	event.TenpaiInfo = tmp.TenpaiInfo
 	return nil
 }
 
 type EventChi struct {
-	Who  Wind  `json:"who"`
-	Call *Call `json:"call"`
+	Who         Wind         `json:"who"`
+	Call        *Call        `json:"call"`
+	TenpaiInfos *TenpaiInfos `json:"tenpai_infos,omitempty"`
 }
 
 func (event *EventChi) GetType() EventType {
@@ -212,18 +213,21 @@ func (event *EventChi) GetType() EventType {
 
 func (event *EventChi) MarshalJSON() ([]byte, error) {
 	return json.Marshal(&struct {
-		Who  string `json:"who"`
-		Call *Call  `json:"call"`
+		Who         string       `json:"who"`
+		Call        *Call        `json:"call"`
+		TenpaiInfos *TenpaiInfos `json:"tenpai_infos,omitempty"`
 	}{
-		Who:  event.Who.String(),
-		Call: event.Call,
+		Who:         event.Who.String(),
+		Call:        event.Call,
+		TenpaiInfos: event.TenpaiInfos,
 	})
 }
 
 func (event *EventChi) UnmarshalJSON(data []byte) error {
 	var tmp struct {
-		Who  string `json:"who"`
-		Call *Call  `json:"call"`
+		Who         string       `json:"who"`
+		Call        *Call        `json:"call"`
+		TenpaiInfos *TenpaiInfos `json:"tenpai_infos,omitempty"`
 	}
 	err := json.Unmarshal(data, &tmp)
 	if err != nil {
@@ -231,12 +235,14 @@ func (event *EventChi) UnmarshalJSON(data []byte) error {
 	}
 	event.Who = MapStringToWind[tmp.Who]
 	event.Call = tmp.Call
+	event.TenpaiInfos = tmp.TenpaiInfos
 	return nil
 }
 
 type EventPon struct {
-	Who  Wind  `json:"who"`
-	Call *Call `json:"call"`
+	Who         Wind         `json:"who"`
+	Call        *Call        `json:"call"`
+	TenpaiInfos *TenpaiInfos `json:"tenpai_infos,omitempty"`
 }
 
 func (event *EventPon) GetType() EventType {
@@ -245,18 +251,21 @@ func (event *EventPon) GetType() EventType {
 
 func (event *EventPon) MarshalJSON() ([]byte, error) {
 	return json.Marshal(&struct {
-		Who  string `json:"who"`
-		Call *Call  `json:"call"`
+		Who         string       `json:"who"`
+		Call        *Call        `json:"call"`
+		TenpaiInfos *TenpaiInfos `json:"tenpai_infos,omitempty"`
 	}{
-		Who:  event.Who.String(),
-		Call: event.Call,
+		Who:         event.Who.String(),
+		Call:        event.Call,
+		TenpaiInfos: event.TenpaiInfos,
 	})
 }
 
 func (event *EventPon) UnmarshalJSON(data []byte) error {
 	var tmp struct {
-		Who  string `json:"who"`
-		Call *Call  `json:"call"`
+		Who         string       `json:"who"`
+		Call        *Call        `json:"call"`
+		TenpaiInfos *TenpaiInfos `json:"tenpai_infos,omitempty"`
 	}
 	err := json.Unmarshal(data, &tmp)
 	if err != nil {
@@ -264,6 +273,7 @@ func (event *EventPon) UnmarshalJSON(data []byte) error {
 	}
 	event.Who = MapStringToWind[tmp.Who]
 	event.Call = tmp.Call
+	event.TenpaiInfos = tmp.TenpaiInfos
 	return nil
 }
 

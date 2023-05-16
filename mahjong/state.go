@@ -99,7 +99,7 @@ func (s *DealState) step() map[Wind]Calls {
 		var tenpaiInfos *TenpaiInfos
 		if wind == pMain.Wind {
 			t = tile
-			tenpaiInfos = GetPlayerTenpaiInfos(s.g, pMain)
+			tenpaiInfos = GetTenpaiInfos(s.g, pMain)
 		}
 		posEvent[wind] = &EventGet{
 			Who:         pMain.Wind,
@@ -234,20 +234,20 @@ func (s *DiscardState) step() map[Wind]Calls {
 	// generate discard event
 	var event Event
 	var posEvent = make(map[Wind]Event)
-	var TenpaiSlice = pMain.TenpaiSlice
+	var tenpaiInfo = GetTenpaiInfo(s.g, pMain)
 	for wind := range s.g.PosPlayer {
 		if wind == s.g.Position {
 			if s.tsumoGiri {
 				event = &EventTsumoGiri{
-					Who:         s.g.Position,
-					Tile:        s.tileID,
-					TenpaiSlice: TenpaiSlice,
+					Who:        s.g.Position,
+					Tile:       s.tileID,
+					TenpaiInfo: tenpaiInfo,
 				}
 			} else {
 				event = &EventDiscard{
-					Who:         s.g.Position,
-					Tile:        s.tileID,
-					TenpaiSlice: TenpaiSlice,
+					Who:        s.g.Position,
+					Tile:       s.tileID,
+					TenpaiInfo: tenpaiInfo,
 				}
 			}
 		} else {
@@ -475,6 +475,7 @@ func (s *ChiPonState) String() string {
 func (s *ChiPonState) step() map[Wind]Calls {
 	var validCalls = make(map[Wind]Calls)
 	validCalls[s.g.Position] = s.g.JudgeDiscardCall(s.g.PosPlayer[s.g.Position])
+	pMain := s.g.PosPlayer[s.g.Position]
 
 	// generate event
 	var posEvent = make(map[Wind]Event)
@@ -492,6 +493,22 @@ func (s *ChiPonState) step() map[Wind]Calls {
 		}
 	}
 	for wind := range s.g.PosPlayer {
+		if wind == s.g.Position {
+			switch event.GetType() {
+			case EventTypeChi:
+				event = &EventChi{
+					Who:         s.g.Position,
+					Call:        s.call,
+					TenpaiInfos: GetTenpaiInfos(s.g, pMain),
+				}
+			case EventTypePon:
+				event = &EventPon{
+					Who:         s.g.Position,
+					Call:        s.call,
+					TenpaiInfos: GetTenpaiInfos(s.g, pMain),
+				}
+			}
+		}
 		posEvent[wind] = event
 	}
 	s.g.addPosEvent(posEvent)

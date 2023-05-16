@@ -31,7 +31,7 @@ func TestOneGame(t *testing.T) {
 }
 
 func TestMultiGames(t *testing.T) {
-	var seed int64 = 14
+	var seed int64 = rand.Int63()
 
 	players := make([]*mahjong.Player, 4)
 	posCalls := make(map[mahjong.Wind]mahjong.Calls, 4)

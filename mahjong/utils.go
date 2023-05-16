@@ -60,37 +60,50 @@ func GetScoreResult(scoreRule *score.RulesStruct, yakuResult *yaku.Result, honba
 	return score.GetScoreByResult(scoreRule, yakuResult, score.Honba(honba))
 }
 
-// GetPlayerTenpaiInfos
+// GetTenpaiInfos
 //
 //	@Description: after one player get a tile, get the tenpai infos(such as how many tiles remaining to ron)
 //	@param game
 //	@param player
 //	@return *TenpaiInfos
-func GetPlayerTenpaiInfos(game *Game, player *Player) *TenpaiInfos {
+func GetTenpaiInfos(game *Game, player *Player) *TenpaiInfos {
 	tenpaiTiles := player.GetPossibleTenpaiTiles()
 	if len(tenpaiTiles) == 0 {
 		return nil
 	}
 	var tenpaiInfos = NewTenpaiInfos()
 	for _, tileToDiscard := range tenpaiTiles {
-		var tenpaiInfo = NewTenpaiInfo()
 		var playerCopy = player.Copy()
 		playerCopy.HandTiles.Remove(tileToDiscard)
-		tenpaiSlice := GetTenpaiSlice(playerCopy.HandTiles, playerCopy.Melds)
-		for _, tenpaiTileClass := range tenpaiSlice {
-			tenpaiInfo.TileClassesTenpaiResult[tenpaiTileClass] = GetTenpaiResult(game, playerCopy, tenpaiTileClass)
-			for _, tile := range player.DiscardTiles {
-				if tile.Class() == tenpaiTileClass {
-					tenpaiInfo.Furiten = true
-				}
-			}
-			if player.IsFuriten() {
+		(*tenpaiInfos)[tileToDiscard] = GetTenpaiInfo(game, playerCopy)
+	}
+	return tenpaiInfos
+}
+
+// GetTenpaiInfo
+//
+//	@Description: get the tenpai info of a player after discard a tile
+//	@param game
+//	@param player
+//	@return *TenpaiInfo
+func GetTenpaiInfo(game *Game, player *Player) *TenpaiInfo {
+	var tenpaiInfo = NewTenpaiInfo()
+	tenpaiSlice := GetTenpaiSlice(player.HandTiles, player.Melds)
+	if len(tenpaiSlice) == 0 {
+		return nil
+	}
+	for _, tenpaiTileClass := range tenpaiSlice {
+		tenpaiInfo.TileClassesTenpaiResult[tenpaiTileClass] = GetTenpaiResult(game, player, tenpaiTileClass)
+		for _, tile := range player.DiscardTiles {
+			if tile.Class() == tenpaiTileClass {
 				tenpaiInfo.Furiten = true
 			}
 		}
-		(*tenpaiInfos)[tileToDiscard] = tenpaiInfo
+		if player.IsFuriten() {
+			tenpaiInfo.Furiten = true
+		}
 	}
-	return tenpaiInfos
+	return tenpaiInfo
 }
 
 func GetTenpaiResult(game *Game, player *Player, tileClass TileClass) *TenpaiResult {
@@ -101,7 +114,13 @@ func GetTenpaiResult(game *Game, player *Player, tileClass TileClass) *TenpaiRes
 			minWinTiles.Remove(tile)
 		}
 	}
-	minWinTile := minWinTiles[len(minWinTiles)-1]
+	var minWinTile Tile
+	if len(minWinTiles) != 0 {
+		minWinTile = minWinTiles[len(minWinTiles)-1]
+	} else {
+		minWinTile = tileClass.To4Tiles()[3]
+	}
+
 	result := game.getRonResult(player, minWinTile)
 	return NewTenpaiResult(remainNum, result)
 }
