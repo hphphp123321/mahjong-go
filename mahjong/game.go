@@ -73,6 +73,8 @@ func (game *Game) Reset(playerSlice []*Player, tiles Tiles) map[Wind]Calls {
 	game.Position = East
 	game.State = &InitState{g: game, tiles: tiles}
 	game.posEvents = map[Wind]Events{}
+	game.honbaPlus = false
+	game.nextRound = false
 
 	game.P0 = playerSlice[0]
 	game.P1 = playerSlice[1]
