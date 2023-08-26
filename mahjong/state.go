@@ -774,12 +774,12 @@ func (s *EndState) step() map[Wind]Calls {
 				}
 				s.g.addPosEvent(posEvent)
 				posEvent = make(map[Wind]Event)
+			}
 
-				if wind == East {
-					s.g.honbaPlus = true
-				} else {
-					s.g.nextRound = true
-				}
+			if wind == East {
+				s.g.honbaPlus = true
+			} else {
+				s.g.nextRound = true
 			}
 		}
 	}
