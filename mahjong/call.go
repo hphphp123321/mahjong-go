@@ -73,6 +73,16 @@ func (call *Call) UTF8() string {
 	return call.CallTiles.UTF8()
 }
 
+func (call *Call) Equal(call2 *Call) bool {
+	if call.CallType != call2.CallType {
+		return false
+	}
+	if TilesEqual(call.CallTiles, call2.CallTiles) {
+		return true
+	}
+	return false
+}
+
 func NewCall(meldType CallType, CallTiles Tiles, CallTilesFromWho []Wind) *Call {
 	return &Call{
 		CallType:         meldType,
