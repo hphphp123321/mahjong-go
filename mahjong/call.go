@@ -141,5 +141,14 @@ func (calls *Calls) UTF8() string {
 	return str
 }
 
+func (calls *Calls) Contains(call *Call) bool {
+	for _, c := range *calls {
+		if CallEqual(c, call) {
+			return true
+		}
+	}
+	return false
+}
+
 var SkipCall = NewCall(Skip, nil, nil)
 var NextCall = NewCall(Next, nil, nil)
