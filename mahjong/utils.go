@@ -35,11 +35,11 @@ func IndicatorsToDora(indicators Tiles) Tiles {
 
 func IndicatorToDora(indicator Tile) Tile {
 	switch indicator {
-	case 32, 33, 34, 35, 68, 69, 70, 71, 104, 105, 106, 107:
+	case Man9T1, Man9T2, Man9T3, Man9T4, Pin9T1, Pin9T2, Pin9T3, Pin9T4, Sou9T1, Sou9T2, Sou9T3, Sou9T4:
 		return indicator - 32
-	case 120, 121, 122, 123:
+	case Pei1, Pei2, Pei3, Pei4:
 		return indicator - 12
-	case 132, 133, 134, 135:
+	case Chun1, Chun2, Chun3, Chun4:
 		return indicator - 8
 	default:
 		return indicator + 1

@@ -1185,6 +1185,7 @@ func (game *Game) processRonResult(results map[Wind]*Result) {
 		totalPoints += pointsChange.TotalPayed()
 	}
 	game.PosPlayer[game.Position].Points -= totalPoints
+	game.NumRiichi = 0 // Clear Riichi Sticks
 }
 
 func (game *Game) addRonEvents(results map[Wind]*Result) {
@@ -1243,6 +1244,7 @@ func (game *Game) processTsumoResult(wind Wind, result *Result) {
 			}
 		}
 	}
+	game.NumRiichi = 0 // Clear Riichi Sticks
 }
 
 func (game *Game) GetGlobalEvents() Events {
