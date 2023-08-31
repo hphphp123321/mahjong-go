@@ -344,7 +344,7 @@ func (game *Game) processTsumo(pMain *Player, call *Call) *Result {
 		pMain.IsIppatsu = true
 	}
 	if pMain.JunNum == 1 && pMain.IppatsuStatus {
-		if pMain.Wind == 0 {
+		if pMain.Wind == East {
 			pMain.IsTenhou = true
 		} else {
 			pMain.IsChiihou = true
@@ -539,7 +539,7 @@ func (game *Game) judgeTsumo(pMain *Player) Calls {
 		pMain.IsRinshan = true
 	}
 	if pMain.JunNum == 1 && pMain.IppatsuStatus {
-		if pMain.Wind == South {
+		if pMain.Wind == East {
 			pMain.IsTenhou = true
 		} else {
 			pMain.IsChiihou = true
