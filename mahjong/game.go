@@ -24,7 +24,7 @@ type Game struct {
 
 	Tiles *MahjongTiles
 
-	WindRound WindRound // {0:东一, 1:东二, 2:东三, 3:东四, 4:南一, 5:南二, 6:南三, 7:南四(all last), 8:西一(西入条件)...}
+	WindRound WindRound // {1:东一, 2:东二, 3:东三, 4:东四, 5:南一, 6:南二, 7:南三, 8:南四(all last), 9:西一(西入条件)...}
 	NumGame   int
 
 	NumRiichi int // riichi sticks num
@@ -185,10 +185,10 @@ func (game *Game) newGameRound() {
 	game.Tiles.Reset()
 	game.posEvents = map[Wind]Events{}
 	game.Position = East
-	game.PosPlayer[Wind((16-game.WindRound)%4)] = game.P0
-	game.PosPlayer[Wind((17-game.WindRound)%4)] = game.P1
-	game.PosPlayer[Wind((18-game.WindRound)%4)] = game.P2
-	game.PosPlayer[Wind((19-game.WindRound)%4)] = game.P3
+	game.PosPlayer[Wind((16-game.WindRound+WindRoundEast1)%4)] = game.P0
+	game.PosPlayer[Wind((17-game.WindRound+WindRoundEast1)%4)] = game.P1
+	game.PosPlayer[Wind((18-game.WindRound+WindRoundEast1)%4)] = game.P2
+	game.PosPlayer[Wind((19-game.WindRound+WindRoundEast1)%4)] = game.P3
 	game.P0.ResetForRound()
 	game.P1.ResetForRound()
 	game.P2.ResetForRound()
