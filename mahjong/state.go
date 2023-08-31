@@ -28,6 +28,7 @@ func (s *InitState) step() map[Wind]Calls {
 		player.HandTiles = append(player.HandTiles, initTiles[wind]...)
 		sort.Sort(&player.HandTiles)
 		player.Wind = wind
+		player.ShantenNum = player.GetShantenNum()
 		posEvent[wind] = &EventStart{
 			WindRound:         s.g.WindRound,
 			InitWind:          wind,
