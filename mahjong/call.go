@@ -66,7 +66,7 @@ func (call *Call) Copy() *Call {
 }
 
 func (call *Call) String() string {
-	return call.CallTiles.String()
+	return call.CallType.String() + ": " + call.CallTiles.String()
 }
 
 func (call *Call) UTF8() string {
