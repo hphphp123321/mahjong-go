@@ -11,6 +11,9 @@ import (
 const NumTiles int = 136
 
 func (tile Tile) Class() TileClass {
+	if tile == TileDummy {
+		return TileClassDummy
+	}
 	return TileClass(tile / 4)
 }
 
