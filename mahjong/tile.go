@@ -42,8 +42,9 @@ func (tiles *Tiles) String() string {
 	return s
 }
 
-func (tiles *Tiles) Classes() TileClasses {
-	return common.MapSlice(*tiles, func(t Tile) TileClass { return t.Class() })
+func (tiles *Tiles) Classes() *TileClasses {
+	var tileClasses = TileClasses(common.MapSlice(*tiles, func(t Tile) TileClass { return t.Class() }))
+	return &tileClasses
 }
 
 type TileT struct {
