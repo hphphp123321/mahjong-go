@@ -3,7 +3,7 @@ module github.com/hphphp123321/mahjong-go
 go 1.20
 
 require (
-	github.com/dnovikoff/tempai-core v0.0.0-20201102152242-80e66cf333ab
+	github.com/dnovikoff/tempai-core v0.0.0-20230912180102-70723b61e1fb
 	github.com/hphphp123321/go-common v0.0.0-20230419113915-7ac9d9c533b6
 )
 

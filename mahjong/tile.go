@@ -3,6 +3,7 @@ package mahjong
 import (
 	"encoding/json"
 	"errors"
+	"github.com/hphphp123321/go-common"
 	"math/rand"
 	"sort"
 )
@@ -39,6 +40,10 @@ func (tiles *Tiles) String() string {
 		s += tile.String()
 	}
 	return s
+}
+
+func (tiles *Tiles) Classes() TileClasses {
+	return common.MapSlice(*tiles, func(t Tile) TileClass { return t.Class() })
 }
 
 type TileT struct {
@@ -305,6 +310,17 @@ func (tileClasses *TileClasses) Copy() TileClasses {
 	tileClassesCopy := make(TileClasses, len(*tileClasses), cap(*tileClasses))
 	copy(tileClassesCopy, *tileClasses)
 	return tileClassesCopy
+}
+
+func (tileClasses *TileClasses) String() string {
+	var s string
+	for i, tileClass := range *tileClasses {
+		if i != 0 {
+			s += " "
+		}
+		s += tileClass.String()
+	}
+	return s
 }
 
 func (tileClasses *TileClasses) MarshalJSON() ([]byte, error) {
