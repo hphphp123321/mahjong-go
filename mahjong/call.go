@@ -127,8 +127,11 @@ func (calls *Calls) Remove(call *Call) {
 
 func (calls *Calls) String() string {
 	var str string
-	for _, call := range *calls {
-		str += call.String() + ","
+	for i, call := range *calls {
+		if i != 0 {
+			str += " "
+		}
+		str += call.String()
 	}
 	return str
 }

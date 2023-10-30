@@ -34,6 +34,9 @@ func (tiles *Tiles) UTF8() string {
 func (tiles *Tiles) String() string {
 	var s string
 	for i, tile := range *tiles {
+		if tile == TileDummy {
+			continue
+		}
 		if i != 0 {
 			s += " "
 		}
@@ -316,6 +319,9 @@ func (tileClasses *TileClasses) Copy() TileClasses {
 func (tileClasses *TileClasses) String() string {
 	var s string
 	for i, tileClass := range *tileClasses {
+		if tileClass == TileClassDummy {
+			continue
+		}
 		if i != 0 {
 			s += " "
 		}
