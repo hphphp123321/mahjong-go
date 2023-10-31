@@ -244,6 +244,8 @@ func (game *Game) discardTileProcess(pMain *Player, tileID Tile) {
 		} else {
 			pMain.DiscardFuriten = false
 		}
+	} else {
+		pMain.TenpaiSlice = []TileClass{}
 	}
 	otherWinds := game.getOtherWinds()
 	for _, wind := range otherWinds {
