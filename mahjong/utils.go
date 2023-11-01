@@ -138,6 +138,14 @@ func GetRemainTileClassNumFromPlayerPerspective(game *Game, player *Player, tile
 				num--
 			}
 		}
+
+		for _, meld := range p.Melds {
+			for _, tile := range meld.CallTiles {
+				if tile.Class() == tileClass {
+					num--
+				}
+			}
+		}
 	}
 	for _, tile := range game.Tiles.DoraIndicators() {
 		if tile.Class() == tileClass {
