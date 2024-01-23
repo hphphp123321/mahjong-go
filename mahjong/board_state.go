@@ -321,6 +321,7 @@ func (b *BoardState) Equal(bs *BoardState) bool {
 }
 
 func (b *BoardState) handleEventStart(event Event) {
+	b.Reset()
 	b.WindRound = event.(*EventStart).WindRound
 	b.NumHonba = event.(*EventStart).NumHonba
 	b.NumRiichi = event.(*EventStart).NumRiichi
