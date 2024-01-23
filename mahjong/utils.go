@@ -133,7 +133,7 @@ func GetRemainTileClassNumFromPlayerPerspective(game *Game, player *Player, tile
 		}
 	}
 	for _, p := range game.PosPlayer {
-		for _, tile := range p.DiscardTiles {
+		for _, tile := range p.BoardTiles {
 			if tile.Class() == tileClass {
 				num--
 			}
