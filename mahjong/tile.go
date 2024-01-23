@@ -195,7 +195,7 @@ func (tiles *Tiles) Remove(tile Tile) {
 			return
 		}
 	}
-	panic("tile" + string(rune(tile)) + "not in tiles")
+	panic("tile" + tile.String() + "not in tiles")
 }
 
 func (tiles *Tiles) Append(tile Tile) {
@@ -291,7 +291,7 @@ func (tileClasses *TileClasses) Remove(tileClass TileClass) {
 			return
 		}
 	}
-	panic("tileClass" + string(rune(tileClass)) + "not in tileClasses")
+	panic("tileClass" + tileClass.String() + "not in tileClasses")
 }
 
 func (tileClasses *TileClasses) Index(tileClass TileClass, startIdx int) int {
