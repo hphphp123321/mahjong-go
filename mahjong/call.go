@@ -74,6 +74,9 @@ func (call *Call) UTF8() string {
 }
 
 func (call *Call) Equal(call2 *Call) bool {
+	if call == nil || call2 == nil {
+		return false
+	}
 	if call.CallType != call2.CallType {
 		return false
 	}
