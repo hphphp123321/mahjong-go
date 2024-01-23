@@ -95,6 +95,9 @@ func NewCall(meldType CallType, CallTiles Tiles, CallTilesFromWho []Wind) *Call 
 }
 
 func CallEqual(call1 *Call, call2 *Call) bool {
+	if call1 == nil || call2 == nil {
+		return false
+	}
 	if call1.CallType != call2.CallType {
 		return false
 	}
