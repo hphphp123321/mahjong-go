@@ -1,6 +1,7 @@
 package mahjong
 
 import (
+	"errors"
 	"fmt"
 	"github.com/dnovikoff/tempai-core/base"
 	"github.com/dnovikoff/tempai-core/score"
@@ -21,6 +22,8 @@ type Game struct {
 
 	PosPlayer map[Wind]*Player
 	posEvents map[Wind]Events
+
+	allEvents Events // all events in one game (several rounds)
 
 	Tiles *MahjongTiles
 
@@ -105,7 +108,7 @@ func (game *Game) Step(posCall map[Wind]*Call) (map[Wind]Calls, EndType) {
 	}
 	for len(posCalls) == 0 {
 		if err := game.State.next(posCall); err != nil {
-			if err == ErrGameEnd {
+			if errors.Is(err, ErrGameEnd) {
 				return posCalls, EndTypeGame
 			} else {
 				panic(err)
@@ -114,7 +117,9 @@ func (game *Game) Step(posCall map[Wind]*Call) (map[Wind]Calls, EndType) {
 		posCall = make(map[Wind]*Call, 4)
 		posCalls = game.State.step()
 	}
-	if len(posCalls) == 4 {
+	if len(posCalls) == 4 { // round end
+		var globalEvents = game.GetGlobalEvents()
+		game.allEvents = append(game.allEvents, globalEvents...)
 		return posCalls, EndTypeRound
 	}
 	return posCalls, EndTypeNone
@@ -1253,7 +1258,7 @@ func (game *Game) GetGlobalEvents() Events {
 	var events = make(Events, 0)
 	// add all tiles event
 	events = append(events, &EventGlobalInit{
-		AllTiles:  game.Tiles.tiles,
+		AllTiles:  game.Tiles.tiles.Copy(),
 		WindRound: game.WindRound,
 		Seed:      game.Seed,
 		NumGame:   game.NumGame,
@@ -1346,5 +1351,16 @@ func (game *Game) GetGlobalEvents() Events {
 		}
 	}
 	events[0].(*EventGlobalInit).InitPoints = initPoints
+	return events
+}
+
+func (game *Game) GetAllGlobalEvents() Events {
+	var events Events
+	for _, event := range game.allEvents {
+		events = append(events, event)
+	}
+	for _, event := range game.GetGlobalEvents() {
+		events = append(events, event)
+	}
 	return events
 }

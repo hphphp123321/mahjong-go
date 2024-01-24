@@ -36,9 +36,7 @@ func ReConstructGame(playerSlice []*Player, globalEvents Events) *Game {
 	index := 1
 	for index < len(globalEvents) {
 		var posCall = make(map[Wind]*Call)
-		if len(posCalls) == 4 {
-			return game
-		} else if len(posCalls) == 0 {
+		if len(posCalls) == 0 {
 			posCalls, _ = game.Step(posCall)
 			index++
 			continue
@@ -46,6 +44,8 @@ func ReConstructGame(playerSlice []*Player, globalEvents Events) *Game {
 
 		event := globalEvents[index]
 		switch event.GetType() {
+		case EventTypeGlobalInit:
+			return ReConstructGame(playerSlice, globalEvents[index:]) // reconstruct from this event
 		case EventTypeGet:
 			for wind := range posCalls {
 				if game.Position != wind || common.SliceContain(posCalls[wind], SkipCall) {
